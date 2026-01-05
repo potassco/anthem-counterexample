@@ -5,9 +5,9 @@ Test cases for main application functionality.
 from io import StringIO
 from unittest import TestCase
 
-from fillname.utils import logging
-from fillname.utils.logging import configure_logging, get_logger
-from fillname.utils.parser import get_parser
+from anthem_counterexample.utils import logging
+from anthem_counterexample.utils.logging import configure_logging, get_logger
+from anthem_counterexample.utils.parser import get_parser
 
 
 class TestMain(TestCase):
@@ -30,5 +30,5 @@ class TestMain(TestCase):
         Test the parser.
         """
         parser = get_parser()
-        ret = parser.parse_args(["--log", "info"])
+        ret = parser.parse_args(["--log", "info", "left", "user_guide"])
         self.assertEqual(ret.log, logging.INFO)

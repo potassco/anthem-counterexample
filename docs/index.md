@@ -4,7 +4,7 @@ hide:
   - toc
 ---
 
-# fillname
+# anthem-counterexample
 
 !!! info
-    *fillname* is part of the [Potassco](https://potassco.org) suite.
+    *anthem-counterexample* is part of the [Potassco](https://potassco.org) suite.

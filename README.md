@@ -1,4 +1,4 @@
-# fillname
+# anthem-counterexample
 
 > Remove this block after following the instructions below to use the template.
 >
@@ -22,7 +22,7 @@ pip install .
 Run the following for basic usage information:
 
 ```bash
-fillname -h
+anthem_counterexample -h
 ```
 
 To generate and open the documentation, run
