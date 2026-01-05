@@ -112,7 +112,7 @@ def get_difference_program(outputs: set[Predicate]) -> str:
             prog.append(f"diff :- not {pred.name}({variables}), {pred.name}{PREDICATE_SUFFIX}({variables}).")
 
     # detect the unsat predicate as a difference
-    prog.append(f"diff :- {unsat_pred()}")
+    prog.append(f"diff :- {unsat_pred()}.")
 
     # enforce a counterexample
     prog.append(":- not diff.")
