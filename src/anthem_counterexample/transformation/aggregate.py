@@ -2,7 +2,7 @@
 Module to remove head aggregates.
 """
 
-from clingo.ast import AST, Transformer, ASTType, BodyAggregate
+from clingo.ast import AST, Transformer, ASTType, BodyAggregate, BodyAggregateElement
 
 from ..utils.transformation import LOC, aggregate_constraint, choice_rule_for_elements
 
@@ -13,7 +13,7 @@ class HeadAggregateNormalizer(Transformer):
 
     E.g. lower <= #count{ t : l : L } <= upper :- body. is turned into:
     1. { l : L } :- body. and
-    2. :- body, not lower <= #count{ t : l : L } <= upper.
+    2. :- body, not lower <= #count{ t : l, L } <= upper.
     """
 
     def visit_Rule(self, node: AST) -> AST | list[AST]:  # pylint: disable=invalid-name
@@ -30,11 +30,24 @@ class HeadAggregateNormalizer(Transformer):
         choice_rule = choice_rule_for_elements(head.elements, node.body)
 
         # body aggregate corresponding to the original head aggregate
+        body_aggregate_elements = []
+        for elem in head.elements:
+            conditional = elem.condition
+            condition = []
+            condition.append(conditional.literal)
+            for x in conditional.condition:
+                condition.append(x)
+            new_elem = BodyAggregateElement(
+                terms=elem.terms,
+                condition=condition,
+            )
+            body_aggregate_elements.append(new_elem)
+
         body_aggregate = BodyAggregate(
             location=LOC,
             left_guard=head.left_guard,
             function=head.function,
-            elements=head.elements,
+            elements=body_aggregate_elements,
             right_guard=head.right_guard,
         )
 
