@@ -64,6 +64,10 @@ def get_parser() -> ArgumentParser:
 
     parser.add_argument("--no-solve", "-n", action="store_true", help="disable solving the counterexample programs")
 
+    parser.add_argument("--start", "-s", type=int, default=0, help="start value for the domain size [%(default)s]")
+
+    parser.add_argument("--max", "-m", type=int, help="optional limit for the domain size")
+
     parser.add_argument("left", type=str, help="the left program")
 
     parser.add_argument("right", type=str, help="the right program")

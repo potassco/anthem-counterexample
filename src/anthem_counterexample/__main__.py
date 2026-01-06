@@ -4,14 +4,12 @@ The main entry point for the application.
 
 import sys
 
-from clingo.control import Control
-
-from . import build_eqt, save_eqt_to_file
+from . import build_eqt, save_eqt_to_file, solve_for_counterexample
+from .eqt import get_difference_program, get_generate_program, get_public_reduct
 from .utils.logging import configure_logging, get_logger
-from .utils.parse_user_guide import parse_user_guide
 from .utils.parse_program import parse_program
+from .utils.parse_user_guide import parse_user_guide
 from .utils.parser import get_parser
-from .eqt import get_generate_program, get_public_reduct, get_difference_program
 
 
 def main() -> None:
@@ -44,16 +42,15 @@ def main() -> None:
     if args.no_solve:
         if not args.save_to_files:
             # output to console
-            print(eqt_l2r)
-            print()
-            print(eqt_r2l)
+            print(f"{eqt_l2r}\n")
+            print(f"{eqt_r2l}\n")
         else:
             # output to files
             save_eqt_to_file(eqt_l2r, args.save_to_files)
             save_eqt_to_file(eqt_r2l, args.save_to_files, False)
     else:
         # solve
-        log.warning("solving not yet supported")
+        solve_for_counterexample(eqt_l2r, eqt_r2l, args.start, args.max)
 
 
 if __name__ == "__main__":
