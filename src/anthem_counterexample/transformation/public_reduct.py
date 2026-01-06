@@ -38,6 +38,10 @@ class ReplacePositiveOutputPredicates(Transformer):
                 # boolean constants are not changed
                 return node
 
+            case ASTType.Comparison:
+                # comparisons are not changed
+                return node
+
             case ASTType.Aggregate | ASTType.BodyAggregate:
                 # transform the elements of aggregates
                 new_elements = self.visit_sequence(atom.elements)
