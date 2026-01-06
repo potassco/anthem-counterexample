@@ -50,7 +50,7 @@ def main() -> None:
             save_eqt_to_file(eqt_r2l, args.save_to_files, False)
     else:
         # solve
-        solve_for_counterexample(eqt_l2r, eqt_r2l, args.start, args.max)
+        solve_for_counterexample(eqt_l2r, eqt_r2l, inputs, outputs, args.start, args.max)
 
 
 if __name__ == "__main__":
