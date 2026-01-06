@@ -19,12 +19,13 @@ def build_eqt(generate: str, left: list[AST], public_reduct: list[AST], differen
     Build the EQT program as a string from the components.
     """
     eqt = (
-        f"% EQT {'forward' if forward else 'backward'}\n"
+        "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        + f"% EQT {'forward' if forward else 'backward'}\n"
         + "% input generation\n"
         + generate
         + f"\n\n% {'left' if forward else 'right'} program\n"
         + program_to_str(left, True)
-        + f"\n%public reduct of {'right' if forward else 'left'} program\n"
+        + f"\n% public reduct of {'right' if forward else 'left'} program\n"
         + program_to_str(public_reduct, True)
         + "\n% difference detection\n"
         + difference

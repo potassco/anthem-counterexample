@@ -15,8 +15,8 @@ from .transformation import (
     TransformRuleHeads,
 )
 from .utils import Predicate, program_to_str
-from .utils.transformation import apply_transformer, unsat_pred, PREDICATE_SUFFIX
 from .utils.logging import get_logger
+from .utils.transformation import DIFF_PREDICATE, DOMAIN_PREDICATE, PREDICATE_SUFFIX, UNSAT_PREDICATE, apply_transformer
 
 log = get_logger(__name__)
 
@@ -57,7 +57,7 @@ def get_generate_program(inputs: set[Predicate]) -> str:
     Get the program to generate inputs.
     """
     # start constructing the program as a list of rules (represented as strings)
-    prog = ["#const n=0.", "dom(1..n)."]
+    prog = ["#const domain_size=0.", f"{DOMAIN_PREDICATE}(1..domain_size)."]
 
     for pred in inputs:
         # construct list of variables (i.e. X0, X1, ...) and body (i.e. dom(X0), dom(X1), ...)
@@ -68,7 +68,7 @@ def get_generate_program(inputs: set[Predicate]) -> str:
             if i > 0:
                 body += ", "
                 variables += ","
-            body += f"dom({var})"
+            body += f"{DOMAIN_PREDICATE}({var})"
             variables += var
 
         # add choice rule for the predicate
@@ -96,8 +96,8 @@ def get_difference_program(outputs: set[Predicate]) -> str:
     for pred in outputs:
         if pred.arity == 0:
             # add propositional difference rules
-            prog.append(f"diff :- {pred.name}, not {pred.name}{PREDICATE_SUFFIX}.")
-            prog.append(f"diff :- not {pred.name}, {pred.name}{PREDICATE_SUFFIX}.")
+            prog.append(f"{DIFF_PREDICATE} :- {pred.name}, not {pred.name}{PREDICATE_SUFFIX}.")
+            prog.append(f"{DIFF_PREDICATE} :- not {pred.name}, {pred.name}{PREDICATE_SUFFIX}.")
         else:
             # get a list of variables matching the arity of pred
             variables = ""
@@ -108,14 +108,20 @@ def get_difference_program(outputs: set[Predicate]) -> str:
                 variables += var
 
             # add difference rules with variables
-            prog.append(f"diff :- {pred.name}({variables}), not {pred.name}{PREDICATE_SUFFIX}({variables}).")
-            prog.append(f"diff :- not {pred.name}({variables}), {pred.name}{PREDICATE_SUFFIX}({variables}).")
+            prog.append(
+                f"{DIFF_PREDICATE} :- {pred.name}({variables}), not {pred.name}{PREDICATE_SUFFIX}({variables})."
+            )
+            prog.append(
+                f"{DIFF_PREDICATE} :- not {pred.name}({variables}), {pred.name}{PREDICATE_SUFFIX}({variables})."
+            )
 
     # detect the unsat predicate as a difference
-    prog.append(f"diff :- {unsat_pred()}.")
+    # also add a defined statement for unsat to avoid warnings
+    prog.append(f"#defined {UNSAT_PREDICATE}/0.")
+    prog.append(f"{DIFF_PREDICATE} :- {UNSAT_PREDICATE}.")
 
     # enforce a counterexample
-    prog.append(":- not diff.")
+    prog.append(f":- not {DIFF_PREDICATE}.")
 
     # represent the program as a string
     prog_str = "\n".join(prog)

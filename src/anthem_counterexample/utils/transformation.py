@@ -26,6 +26,8 @@ from . import Predicate
 PREDICATE_SUFFIX = "'"
 # TODO: this needs to be a new predicate
 UNSAT_PREDICATE = "unsat"
+DIFF_PREDICATE = "diff"
+DOMAIN_PREDICATE = "dom"
 
 LOC = Location(Position("<string>", 1, 1), Position("<string>", 1, 1))
 
@@ -111,13 +113,6 @@ def is_mapped_predicate(atom: AST) -> bool:
 
     name: str = atom.symbol.name
     return name.endswith(PREDICATE_SUFFIX)
-
-
-def unsat_pred() -> str:
-    """
-    Get the string representing the auxiliary unsat predicate.
-    """
-    return UNSAT_PREDICATE
 
 
 def choice_rule_for_elements(elements: Sequence[AST], body: Sequence[AST]) -> Rule:

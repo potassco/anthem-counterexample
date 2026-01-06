@@ -2,17 +2,17 @@
 Module to transform a program into its public reduct.
 """
 
-from clingo.ast import AST, ASTType, Transformer, Literal, Sign, SymbolicAtom, Function, Rule
+from clingo.ast import AST, ASTType, Function, Literal, Rule, Sign, SymbolicAtom, Transformer
 
 from ..utils import Predicate
 from ..utils.logging import get_logger
 from ..utils.transformation import (
-    atom_to_predicate,
-    map_atom,
-    unsat_pred,
-    unmap_atom,
-    is_mapped_predicate,
     LOC,
+    UNSAT_PREDICATE,
+    atom_to_predicate,
+    is_mapped_predicate,
+    map_atom,
+    unmap_atom,
 )
 
 log = get_logger(__name__)
@@ -116,7 +116,7 @@ class TransformRuleHeads(Transformer):
                 atom=SymbolicAtom(
                     Function(
                         location=LOC,
-                        name=unsat_pred(),
+                        name=UNSAT_PREDICATE,
                         arguments=[],
                         external=False,
                     )
