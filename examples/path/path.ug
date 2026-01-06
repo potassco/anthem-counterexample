@@ -1,0 +1,4 @@
+input: start/1.
+input: goal/1.
+input: edge/2.
+output: path/2.
