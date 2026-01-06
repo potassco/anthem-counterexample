@@ -50,8 +50,7 @@ def _solve_with_size(eqt: str, size: int) -> bool:
     """
     Solve an EQT program with the given domain size and return whether a counterexample was found.
     """
-    # TODO: set the domain size constant
-    ctl = Control()
+    ctl = Control(["-c", f"domain_size={size}"])
     ctl.add(eqt)
     ctl.ground()
     # TODO: add custom on_model function
