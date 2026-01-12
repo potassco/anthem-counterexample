@@ -2,12 +2,12 @@
 Module containing logic program transformations.
 """
 
-from .reject_disjunction import RejectDisjunctions
-from .head_condition import RemoveHeadCondition
 from .aggregate import HeadAggregateNormalizer
-from .choice import ChoiceGuardNormalizer, ChoiceElementNormalizer
+from .choice import ChoiceElementNormalizer, ChoiceGuardNormalizer
+from .head_condition import RemoveHeadCondition
 from .head_negation import RemoveHeadNegation
 from .public_reduct import ReplacePositiveOutputPredicates, TransformRuleHeads
+from .reject_disjunction import RejectDisjunctions
 
 __all__ = [
     "RejectDisjunctions",

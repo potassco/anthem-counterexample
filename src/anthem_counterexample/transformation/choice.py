@@ -2,10 +2,10 @@
 Module to transform choice rules into normal form.
 """
 
-from clingo.ast import AST, Transformer, ASTType, Aggregate, Rule
+from clingo.ast import AST, Aggregate, ASTType, Rule, Transformer
 
-from ..utils.transformation import LOC, aggregate_constraint, choice_rule_for_elements
 from ..utils.logging import get_logger
+from ..utils.transformation import LOC, aggregate_constraint, choice_rule_for_elements
 
 log = get_logger(__name__)
 

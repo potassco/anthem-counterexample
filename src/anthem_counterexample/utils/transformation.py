@@ -6,18 +6,18 @@ from typing import Sequence, Union
 
 from clingo.ast import (
     AST,
+    Aggregate,
     ASTType,
+    BodyAggregate,
+    Disjunction,
     Function,
+    Literal,
+    Location,
+    Position,
+    Rule,
+    Sign,
     SymbolicAtom,
     Transformer,
-    Position,
-    Location,
-    Aggregate,
-    BodyAggregate,
-    Rule,
-    Literal,
-    Sign,
-    Disjunction,
 )
 
 from . import Predicate

@@ -2,7 +2,7 @@
 Module to remove head aggregates.
 """
 
-from clingo.ast import AST, Transformer, ASTType, BodyAggregate, BodyAggregateElement
+from clingo.ast import AST, ASTType, BodyAggregate, BodyAggregateElement, Transformer
 
 from ..utils.transformation import LOC, aggregate_constraint, choice_rule_for_elements
 

@@ -22,7 +22,7 @@ def main() -> None:
 
     # logging
     configure_logging(sys.stderr, args.log, sys.stderr.isatty())
-    log = get_logger("main")
+    get_logger("main")
 
     # parsing user guide and program
     inputs, outputs = parse_user_guide(args.user_guide)

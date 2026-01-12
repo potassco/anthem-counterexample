@@ -2,7 +2,7 @@
 Module to remove negation in rule heads.
 """
 
-from clingo.ast import AST, Transformer, ASTType, Sign, Disjunction, Literal, Rule
+from clingo.ast import AST, ASTType, Disjunction, Literal, Rule, Sign, Transformer
 
 from ..utils.logging import get_logger
 from ..utils.transformation import LOC
