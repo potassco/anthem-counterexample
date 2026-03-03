@@ -10,10 +10,9 @@ from clingo.control import Control
 from clingo.solving import Model
 from clingo.symbol import Symbol
 
-from .eqt import DIFF_PREDICATE
 from .utils import Predicate, program_to_str
 from .utils.logging import get_logger
-from .utils.transformation import PREDICATE_SUFFIX, UNSAT_PREDICATE
+from .utils.transformation import PREDICATE_SUFFIX, UNSAT_PREDICATE, DIFF_PREDICATE
 
 log = get_logger(__name__)
 
@@ -101,7 +100,7 @@ def _solve_with_size(eqt: str, direction: str, size: int, inputs: set[Predicate]
     ctl.ground()
     ret = ctl.solve(on_model=lambda m: _on_model(direction, size, inputs, outputs, m))
 
-    return True if ret.satisfiable else False
+    return bool(ret.satisfiable)
 
 
 def solve_for_counterexample(
@@ -111,7 +110,7 @@ def solve_for_counterexample(
     outputs: set[Predicate],
     domain_start: int = 0,
     domain_max: Optional[int] = None,
-):
+) -> None:
     """
     Solve the given EQT programs for counterexamples by increasing the domain size from start to max.
     """

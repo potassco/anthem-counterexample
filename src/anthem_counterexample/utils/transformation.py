@@ -2,13 +2,12 @@
 Module containing utilities for transformations.
 """
 
-from typing import Sequence, Union
+from typing import Sequence
 
 from clingo.ast import (
     AST,
     Aggregate,
     ASTType,
-    BodyAggregate,
     Disjunction,
     Function,
     Literal,
@@ -115,7 +114,7 @@ def is_mapped_predicate(atom: AST) -> bool:
     return name.endswith(PREDICATE_SUFFIX)
 
 
-def choice_rule_for_elements(elements: Sequence[AST], body: Sequence[AST]) -> Rule:
+def choice_rule_for_elements(elements: Sequence[AST], body: Sequence[AST]) -> AST:
     """
     Get a choice rule for the conditions of elements.
     """
@@ -135,10 +134,13 @@ def choice_rule_for_elements(elements: Sequence[AST], body: Sequence[AST]) -> Ru
     return choice_rule
 
 
-def aggregate_constraint(aggregate: Union[Aggregate, BodyAggregate], body: Sequence[AST]) -> Rule:
+def aggregate_constraint(aggregate: AST, body: Sequence[AST]) -> AST:
     """
     Turn a body B and aggregate A into the constraint :- B, not A.
     """
+    if aggregate.ast_type not in [ASTType.Aggregate, ASTType.BodyAggregate]:
+        raise RuntimeError(f"Argument is not an aggregate {aggregate}")
+
     constraint_body = body
     constraint_body.append(
         Literal(
