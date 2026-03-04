@@ -34,7 +34,7 @@ def main() -> None:
         start=args.start,
         max_size=args.max,
         # TODO: implement check for guess and check
-        use_gc=args.guess_and_check if args.guess_and_check else False,
+        use_gc=False if args.guess_and_check is None else args.guess_and_check,
         inputs=inputs,
         outputs=outputs,
     )
