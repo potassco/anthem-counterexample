@@ -7,6 +7,7 @@ from clingo.ast import AST
 from .transformation import (
     ChoiceElementNormalizer,
     ChoiceGuardNormalizer,
+    ChoiceTermNormalizer,
     HeadAggregateNormalizer,
     RejectDisjunctions,
     RemoveHeadCondition,
@@ -30,6 +31,7 @@ def _normalize_program(prog: list[AST]) -> list[AST]:
         RejectDisjunctions,
         RemoveHeadCondition,
         HeadAggregateNormalizer,
+        ChoiceTermNormalizer,
         ChoiceGuardNormalizer,
         ChoiceElementNormalizer,
         RemoveHeadNegation,

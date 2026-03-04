@@ -2,12 +2,145 @@
 Module to transform choice rules into normal form.
 """
 
-from clingo.ast import AST, Aggregate, ASTType, Rule, Transformer
+from clingo.ast import (
+    AST,
+    Aggregate,
+    ASTType,
+    Rule,
+    Transformer,
+    Variable,
+    Literal,
+    Comparison,
+    Sign,
+    Guard,
+    ComparisonOperator,
+    Location,
+)
 
 from ..utils.logging import get_logger
 from ..utils.transformation import LOC, aggregate_constraint, choice_rule_for_elements
 
 log = get_logger(__name__)
+
+
+def _is_choice(head: AST) -> bool:
+    return head.ast_type == ASTType.Aggregate
+
+
+class ChoiceTermNormalizer(Transformer):
+    """
+    Normalize terms containing intervals or pools in choice rules.
+
+    E.g. { p(1..3) : q(X) } :- body. is turned into:
+    { p(Y) : q(X), Y = 1..3 } :- body.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._var_counter = 0
+        self.used_vars: set[str] = set()
+
+    def _collect_used_vars(self, node: AST) -> None:
+        """
+        Collect all variables occurring in the rule.
+        """
+        self.used_vars.clear()
+
+        class VarCollector(Transformer):
+            """Helper class to collect variables."""
+
+            def visit_Variable(self, node: AST) -> AST:  # pylint: disable=invalid-name
+                """Collect variable."""
+                self_outer.used_vars.add(node.name)
+                return node
+
+        self_outer = self
+        VarCollector().visit(node)
+
+    def _fresh_var(self, location: Location) -> AST:
+        """
+        Generate a fresh variable not occurring in the rule.
+        """
+        while True:
+            self._var_counter += 1
+            name = f"_X{self._var_counter}"
+            if name not in self.used_vars:
+                self.used_vars.add(name)
+                return Variable(location, name)
+
+    def _rewrite_term(self, term: AST, new_conditions: list[AST]) -> AST:
+        """
+        Recursively rewrite a term.
+
+        If the term or any sub-term is an interval or a pool it is replaced by a fresh variable
+        and an equality between the new variable and the term is added to new_conditions.
+        """
+        # case 1: interval or pool term
+        if term.ast_type in (ASTType.Interval, ASTType.Pool):
+            var = self._fresh_var(term.location)
+
+            eq = Literal(
+                term.location,
+                Sign.NoSign,
+                Comparison(var, [Guard(ComparisonOperator.Equal, term)]),
+            )
+
+            new_conditions.append(eq)
+            return var
+
+        # case 2: function term
+        if term.ast_type == ASTType.Function:
+            new_args = [self._rewrite_term(arg, new_conditions) for arg in term.arguments]
+            return term.update(arguments=new_args)
+
+        # case 3: unary operation
+        if term.ast_type == ASTType.UnaryOperation:
+            new_arg = self._rewrite_term(term.argument, new_conditions)
+            return term.update(argument=new_arg)
+
+        # case 4: binary operation
+        if term.ast_type == ASTType.BinaryOperation:
+            new_left = self._rewrite_term(term.left, new_conditions)
+            new_right = self._rewrite_term(term.right, new_conditions)
+            return term.update(left=new_left, right=new_right)
+
+        return term
+
+    def visit_Rule(self, node: AST) -> AST:  # pylint: disable=invalid-name
+        """
+        Transform choice rules containing intervals or pools.
+        """
+        head = node.head
+
+        # skip any rules whose head is not an aggregate
+        if not _is_choice(head):
+            return node
+
+        self._collect_used_vars(node)
+
+        new_elements = []
+
+        for elem in head.elements:
+            # check if choice atom contains pool or interval
+            atom = elem.literal.atom
+            symbol = atom.symbol
+            new_condition = list(elem.condition)
+
+            new_args = [self._rewrite_term(arg, new_condition) for arg in symbol.arguments]
+
+            new_symbol = symbol.update(arguments=new_args)
+
+            new_atom = atom.update(symbol=new_symbol)
+
+            new_lit = elem.literal.update(atom=new_atom)
+
+            new_elem = elem.update(literal=new_lit, condition=new_condition)
+
+            new_elements.append(new_elem)
+
+        new_head = head.update(elements=new_elements)
+
+        return node.update(head=new_head)
 
 
 class ChoiceGuardNormalizer(Transformer):
@@ -25,8 +158,7 @@ class ChoiceGuardNormalizer(Transformer):
         """
         head = node.head
 
-        # skip any rules whose head is not an aggregate
-        if head.ast_type != ASTType.Aggregate:
+        if not _is_choice(head):
             return node
 
         # skip choice rules without guards
@@ -65,8 +197,7 @@ class ChoiceElementNormalizer(Transformer):
         """
         head = node.head
 
-        # skip any rules whose head is not a choice
-        if head.ast_type != ASTType.Aggregate:
+        if not _is_choice(head):
             return node
 
         new_rules = []
