@@ -7,7 +7,7 @@ name = "anthem-counterexample"
 authors = [{ name = "Jan Heuer", email = "jan.heuer@uni-potsdam.de" }]
 description = "A tool to automatically find counterexamples to external equivalence problems."
 requires-python = ">=3.12"
-dependencies = ["clingo>=5.7.1"]
+dependencies = ["clingo>=5.7.1", "networkx"]
 license = { file = "LICENSE" }
 dynamic = ["version"]
 readme = "README.md"
