@@ -3,18 +3,77 @@ The anthem_counterexample project.
 """
 
 import os
-from typing import Optional
 
 from clingo.ast import AST
 from clingo.control import Control
 from clingo.solving import Model
 from clingo.symbol import Symbol
 
-from .utils import Predicate, program_to_str
+from .utils import Predicate, program_to_str, Programs, Options
 from .utils.logging import get_logger
-from .utils.transformation import PREDICATE_SUFFIX, UNSAT_PREDICATE, DIFF_PREDICATE
+from .utils.transformation import DIFF_PREDICATE, PREDICATE_SUFFIX, UNSAT_PREDICATE
 
 log = get_logger(__name__)
+
+
+def assemble_and_execute(programs: Programs, options: Options) -> None:
+    if options.use_gc:
+        _assemble_and_execute_gc(programs, options)
+    else:
+        _assemble_and_execute(programs, options)
+
+
+def _assemble_and_execute(programs: Programs, options: Options) -> None:
+    forward = None
+    backward = None
+    if options.direction.includes_forward():
+        forward = build_eqt(programs.generate, programs.left, programs.public_reduct_right, programs.difference)
+    if options.direction.includes_backward():
+        backward = build_eqt(programs.generate, programs.right, programs.public_reduct_left, programs.difference, False)
+
+    if options.solve:
+        solve_for_counterexample(forward, backward, options.inputs, options.outputs, options.start, options.max_size)
+    else:
+        if options.out_dir:
+            save_eqt_to_file(forward, options.out_dir)
+            save_eqt_to_file(backward, options.out_dir)
+        else:
+            print(f"{forward}\n")
+            print(f"{backward}\n")
+
+
+def _assemble_and_execute_gc(programs: Programs, options: Options) -> None:
+    forward_guess, forward_check = None, None
+    backward_guess, backward_check = None, None
+    if options.direction.includes_forward():
+        forward_guess, forward_check = build_eqt_gc(
+            programs.generate, programs.left, programs.public_reduct_right, programs.difference
+        )
+    if options.direction.includes_backward():
+        backward_guess, backward_check = build_eqt_gc(
+            programs.generate, programs.right, programs.public_reduct_left, programs.difference, False
+        )
+
+    if options.solve:
+        solve_gc_for_counterexample(
+            forward_guess,
+            forward_check,
+            backward_guess,
+            backward_check,
+            options.inputs,
+            options.outputs,
+            options.start,
+            options.max_size,
+        )
+    else:
+        if options.out_dir:
+            save_eqt_gc_to_file(forward_guess, forward_check, options.out_dir)
+            save_eqt_gc_to_file(backward_guess, backward_check, options.out_dir, False)
+        else:
+            print(f"{forward_guess}\n")
+            print(f"{forward_check}\n")
+            print(f"{backward_guess}\n")
+            print(f"{backward_check}\n")
 
 
 def build_eqt(generate: str, left: list[AST], public_reduct: list[AST], difference: str, forward: bool = True) -> str:
@@ -37,13 +96,47 @@ def build_eqt(generate: str, left: list[AST], public_reduct: list[AST], differen
     return eqt
 
 
-def save_eqt_to_file(eqt: str, out_dir: str, forward: bool = True) -> None:
+def build_eqt_gc(
+    generate: str, left: list[AST], public_reduct: list[AST], difference: str, forward: bool = True
+) -> tuple[str, str]:
+    """
+    Build the guess and check EQT program as a string for the components.
+    """
+    eqt_guess = (
+        "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        + f"% EQT {'forward' if forward else 'backward'} guess\n"
+        + "% input generation\n"
+        + generate
+        + f"\n\n% {'left' if forward else 'right'} program\n"
+        + program_to_str(left, True)
+    )
+    eqt_check = (
+        "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        + f"% EQT {'forward' if forward else 'backward'} check\n"
+        + f"% public reduct of {'right' if forward else 'left'} program\n"
+        + program_to_str(public_reduct, True)
+        + "\n% difference detection\n"
+        + difference
+    )
+
+    return eqt_guess, eqt_check
+
+
+def save_eqt_gc_to_file(eqt_guess: str, eqt_check: str, out_dir: str, forward: bool = True) -> None:
+    """
+    Save the guess and check EQT program to the output directory.
+    """
+    save_eqt_to_file(eqt_guess, out_dir, forward, postfix="_guess")
+    save_eqt_to_file(eqt_check, out_dir, forward, postfix="_check")
+
+
+def save_eqt_to_file(eqt: str, out_dir: str, forward: bool = True, postfix: str | None = None) -> None:
     """
     Save the EQT program to the output directory.
     """
     direction = "forward" if forward else "backward"
     os.makedirs(out_dir, exist_ok=True)
-    outfile = os.path.join(out_dir, f"{direction}.lp")
+    outfile = os.path.join(out_dir, f"{direction}{postfix}.lp")
     log.info("Writing %s program to %s", direction, outfile)
     with open(outfile, "w", encoding="utf-8") as f:
         f.write(eqt)
@@ -104,12 +197,12 @@ def _solve_with_size(eqt: str, direction: str, size: int, inputs: set[Predicate]
 
 
 def solve_for_counterexample(
-    eqt_forward: Optional[str],
-    eqt_backward: Optional[str],
+    eqt_forward: str | None,
+    eqt_backward: str | None,
     inputs: set[Predicate],
     outputs: set[Predicate],
     domain_start: int = 0,
-    domain_max: Optional[int] = None,
+    domain_max: int | None = None,
 ) -> None:
     """
     Solve the given EQT programs for counterexamples by increasing the domain size from start to max.
@@ -132,3 +225,16 @@ def solve_for_counterexample(
                 break
 
         domain_size += 1
+
+
+def solve_gc_for_counterexample(
+    forward_guess: str | None,
+    forward_check: str | None,
+    backward_guess: str | None,
+    backward_check: str | None,
+    inputs: set[Predicate],
+    outputs: set[Predicate],
+    domain_start: int = 0,
+    domain_max: int | None = None,
+) -> None:
+    log.error("solving for guess and check not yet implemented")
