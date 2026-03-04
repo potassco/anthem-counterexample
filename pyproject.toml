@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "anthem-counterexample"
 authors = [{ name = "Jan Heuer", email = "jan.heuer@uni-potsdam.de" }]
 description = "A template project."
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 dependencies = ["clingo>=5.7.1"]
 license = { file = "LICENSE" }
 dynamic = ["version"]
