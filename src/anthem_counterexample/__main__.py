@@ -6,11 +6,11 @@ import sys
 
 from . import assemble_and_execute
 from .eqt import get_difference_program, get_generate_program, get_public_reduct
+from .utils import Direction, Options, Programs
 from .utils.logging import configure_logging, get_logger
 from .utils.parse_program import parse_program
 from .utils.parse_user_guide import parse_user_guide
 from .utils.parser import get_parser
-from .utils import Programs, Options, Direction
 
 
 def main() -> None:

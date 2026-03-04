@@ -4,8 +4,8 @@ Module to parse a file into an AST.
 
 from clingo.ast import AST, parse_files
 
-from .output import program_to_str
 from .logging import get_logger
+from .output import program_to_str
 
 log = get_logger(__name__)
 

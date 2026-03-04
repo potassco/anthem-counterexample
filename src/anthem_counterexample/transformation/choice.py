@@ -6,15 +6,15 @@ from clingo.ast import (
     AST,
     Aggregate,
     ASTType,
+    Comparison,
+    ComparisonOperator,
+    Guard,
+    Literal,
+    Location,
     Rule,
+    Sign,
     Transformer,
     Variable,
-    Literal,
-    Comparison,
-    Sign,
-    Guard,
-    ComparisonOperator,
-    Location,
 )
 
 from ..utils.logging import get_logger

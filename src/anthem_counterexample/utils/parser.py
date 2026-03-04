@@ -20,9 +20,11 @@ def get_parser() -> ArgumentParser:
     """
     parser = ArgumentParser(
         prog="anthem-counterexample",
-        description=dedent("""\
+        description=dedent(
+            """\
             Find counterexamples to external equivalence problems
-            """),
+            """
+        ),
     )
     levels = [
         ("error", logging.ERROR),

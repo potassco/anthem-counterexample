@@ -2,9 +2,9 @@
 The anthem_counterexample project.
 """
 
-from .utils import Programs, Options, build_eqt, build_eqt_gc
+from .utils import Options, Programs, build_eqt, build_eqt_gc
 from .utils.logging import get_logger
-from .utils.output import save_eqt_to_file, save_eqt_gc_to_file
+from .utils.output import save_eqt_gc_to_file, save_eqt_to_file
 from .utils.solving import solve_for_counterexample, solve_gc_for_counterexample
 
 log = get_logger(__name__)
