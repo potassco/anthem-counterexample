@@ -5,7 +5,7 @@ The main entry point for the application.
 import sys
 
 from . import assemble_and_execute
-from .eqt import get_difference_program, get_generate_program, get_public_reduct
+from .eqt import get_difference_program, get_generate_program, get_public_reduct, normalize_program
 from .utils import Direction, Options, Programs
 from .utils.logging import configure_logging, get_logger
 from .utils.parse_program import parse_program
@@ -24,6 +24,9 @@ def main() -> None:
     # logging
     configure_logging(sys.stderr, args.log, sys.stderr.isatty())
     get_logger("main")
+
+    left_normalized = normalize_program(parse_program(args.left))
+    right_normalized = normalize_program(parse_program(args.right))
 
     # collect all options
     inputs, outputs = parse_user_guide(args.user_guide)
@@ -46,10 +49,10 @@ def main() -> None:
         generate=get_generate_program(opts.inputs),
         difference=get_difference_program(opts.outputs, opts.use_gc),
         public_reduct_left=(
-            get_public_reduct(parse_program(args.left), opts.outputs) if opts.direction.includes_backward() else None
+            get_public_reduct(left_normalized, opts.outputs) if opts.direction.includes_backward() else None
         ),
         public_reduct_right=(
-            get_public_reduct(parse_program(args.right), opts.outputs) if opts.direction.includes_forward() else None
+            get_public_reduct(right_normalized, opts.outputs) if opts.direction.includes_forward() else None
         ),
     )
 
