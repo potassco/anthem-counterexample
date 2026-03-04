@@ -12,6 +12,11 @@ from .transformation import atom_to_predicate
 log = get_logger(__name__)
 
 
+def is_private_stratified(program: list[AST]) -> bool:
+    # TODO: implement private stratification check
+    return True
+
+
 def has_recursive_aggregates(program: list[AST]) -> bool:
     graph_builder = AggregateDependencyGraphBuilder()
     for n in program:

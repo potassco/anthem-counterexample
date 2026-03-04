@@ -7,6 +7,7 @@ import sys
 from . import assemble_and_execute
 from .eqt import get_difference_program, get_generate_program, get_public_reduct, normalize_program
 from .utils import Direction, Options, Programs
+from .utils.dependency import has_recursive_aggregates
 from .utils.logging import configure_logging, get_logger
 from .utils.parse_program import parse_program
 from .utils.parse_user_guide import parse_user_guide
@@ -28,6 +29,9 @@ def main() -> None:
     left_normalized = normalize_program(parse_program(args.left))
     right_normalized = normalize_program(parse_program(args.right))
 
+    if has_recursive_aggregates(left_normalized) or has_recursive_aggregates(right_normalized):
+        raise RuntimeError("Recursive aggregates are not supported.")
+
     # collect all options
     inputs, outputs = parse_user_guide(args.user_guide)
     opts = Options(
@@ -36,8 +40,11 @@ def main() -> None:
         solve=not args.no_solve,
         start=args.start,
         max_size=args.max,
-        # TODO: implement check for guess and check
-        use_gc=False if args.guess_and_check is None else args.guess_and_check,
+        use_gc=(
+            not (is_private_stratified(left_normalized) and is_private_stratified(right_normalized))
+            if args.guess_and_check is None
+            else args.guess_and_check
+        ),
         inputs=inputs,
         outputs=outputs,
     )
