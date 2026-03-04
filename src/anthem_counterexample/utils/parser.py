@@ -20,11 +20,9 @@ def get_parser() -> ArgumentParser:
     """
     parser = ArgumentParser(
         prog="anthem-counterexample",
-        description=dedent(
-            """\
+        description=dedent("""\
             Find counterexamples to external equivalence problems
-            """
-        ),
+            """),
     )
     levels = [
         ("error", logging.ERROR),
@@ -66,6 +64,13 @@ def get_parser() -> ArgumentParser:
     parser.add_argument("--start", "-s", type=int, default=0, help="start value for the domain size [%(default)s]")
 
     parser.add_argument("--max", "-m", type=int, help="optional limit for the domain size")
+
+    parser.add_argument(
+        "--guess-and-check",
+        "-gc",
+        type=bool,
+        help="enable/disable use of guess and check transformation, if this argument is not given the use of guess and check is determined automatically",
+    )
 
     parser.add_argument("left", type=str, help="the left program")
 

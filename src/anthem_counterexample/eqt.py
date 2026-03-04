@@ -86,7 +86,7 @@ def get_generate_program(inputs: set[Predicate]) -> str:
     return prog_str
 
 
-def get_difference_program(outputs: set[Predicate]) -> str:
+def get_difference_program(outputs: set[Predicate], use_gc: bool = False) -> str:
     """
     Get the program to detect differences in outputs.
     """
@@ -121,7 +121,10 @@ def get_difference_program(outputs: set[Predicate]) -> str:
     prog.append(f"{DIFF_PREDICATE} :- {UNSAT_PREDICATE}.")
 
     # enforce a counterexample
-    prog.append(f":- not {DIFF_PREDICATE}.")
+    if not use_gc:
+        prog.append(f":- not {DIFF_PREDICATE}.")
+    else:
+        prog.append(f":- {DIFF_PREDICATE}.")
 
     # represent the program as a string
     prog_str = "\n".join(prog)
