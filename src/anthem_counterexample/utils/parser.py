@@ -69,7 +69,10 @@ def get_parser() -> ArgumentParser:
         "--guess-and-check",
         "-gc",
         type=bool,
-        help="enable/disable use of guess and check transformation, if this argument is not given the use of guess and check is determined automatically",
+        help=(
+            "enable/disable use of guess and check transformation,"
+            "if this argument is not given the use of guess and check is determined automatically"
+        ),
     )
 
     parser.add_argument("left", type=str, help="the left program")

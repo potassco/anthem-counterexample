@@ -41,6 +41,7 @@ class Direction(Enum):
 
     @classmethod
     def from_string(cls, value: str) -> "Direction":
+        """Create a Direction object from a string."""
         match value:
             case "universal":
                 return cls.UNIVERSAL
@@ -67,7 +68,7 @@ class Predicate:
 
 
 @dataclass
-class Options:
+class Options:  # pylint: disable=too-many-instance-attributes
     """
     Dataclass storing the options of the counterexample problem.
     """
