@@ -7,7 +7,7 @@ import sys
 from . import assemble_and_execute
 from .eqt import get_difference_program, get_generate_program, get_public_reduct, normalize_program
 from .utils import Direction, Options, Programs
-from .utils.dependency import has_recursive_aggregates
+from .utils.dependency import has_recursive_aggregates, is_private_stratified
 from .utils.logging import configure_logging, get_logger
 from .utils.parse_program import parse_program
 from .utils.parse_user_guide import parse_user_guide
@@ -41,7 +41,10 @@ def main() -> None:
         start=args.start,
         max_size=args.max,
         use_gc=(
-            not (is_private_stratified(left_normalized) and is_private_stratified(right_normalized))
+            not (
+                is_private_stratified(left_normalized, inputs | outputs)
+                and is_private_stratified(right_normalized, inputs | outputs)
+            )
             if args.guess_and_check is None
             else args.guess_and_check
         ),
