@@ -14,7 +14,8 @@ from .transformation import (
     ReplacePositiveOutputPredicates,
     TransformRuleHeads,
 )
-from .utils import Predicate, program_to_str
+from .utils import Predicate
+from .utils.output import program_to_str
 from .utils.logging import get_logger
 from .utils.transformation import DIFF_PREDICATE, DOMAIN_PREDICATE, PREDICATE_SUFFIX, UNSAT_PREDICATE, apply_transformer
 

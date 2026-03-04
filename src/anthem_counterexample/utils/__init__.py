@@ -7,6 +7,54 @@ from enum import Enum, auto
 
 from clingo.ast import AST
 
+from .output import program_to_str
+
+
+def build_eqt(generate: str, left: list[AST], public_reduct: list[AST], difference: str, forward: bool = True) -> str:
+    """
+    Build the EQT program as a string from the components.
+    """
+    eqt = (
+        "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        + f"% EQT {'forward' if forward else 'backward'}\n"
+        + "% input generation\n"
+        + generate
+        + f"\n\n% {'left' if forward else 'right'} program\n"
+        + program_to_str(left, True)
+        + f"\n% public reduct of {'right' if forward else 'left'} program\n"
+        + program_to_str(public_reduct, True)
+        + "\n% difference detection\n"
+        + difference
+    )
+
+    return eqt
+
+
+def build_eqt_gc(
+    generate: str, left: list[AST], public_reduct: list[AST], difference: str, forward: bool = True
+) -> tuple[str, str]:
+    """
+    Build the guess and check EQT program as a string for the components.
+    """
+    eqt_guess = (
+        "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        + f"% EQT {'forward' if forward else 'backward'} guess\n"
+        + "% input generation\n"
+        + generate
+        + f"\n\n% {'left' if forward else 'right'} program\n"
+        + program_to_str(left, True)
+    )
+    eqt_check = (
+        "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        + f"% EQT {'forward' if forward else 'backward'} check\n"
+        + f"% public reduct of {'right' if forward else 'left'} program\n"
+        + program_to_str(public_reduct, True)
+        + "\n% difference detection\n"
+        + difference
+    )
+
+    return eqt_guess, eqt_check
+
 
 @dataclass
 class Programs:
@@ -81,16 +129,3 @@ class Options:  # pylint: disable=too-many-instance-attributes
     use_gc: bool
     inputs: set[Predicate]
     outputs: set[Predicate]
-
-
-def program_to_str(prog: list[AST], newline: bool = False) -> str:
-    """
-    Turn a program into its string representation.
-    """
-    string = "\n".join(str(n) for n in prog)
-
-    # optionally add a newline at the end
-    if newline:
-        string += "\n"
-
-    return string
