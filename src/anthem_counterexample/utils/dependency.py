@@ -12,7 +12,7 @@ from .transformation import atom_to_predicate
 log = get_logger(__name__)
 
 
-def is_private_stratified(program: list[AST], public_predicates: set[Predicate]) -> bool:
+def has_enough_visible_atoms(program: list[AST], public_predicates: set[Predicate]) -> bool:
     graph_builder = SignedDependencyGraphBuilder(public_predicates)
     for n in program:
         graph_builder(n)
@@ -88,10 +88,15 @@ class SignedDependencyGraphBuilder(Transformer):
         body_pred = atom_to_predicate(atom)
         self.graph.add_node(body_pred)
 
+        # add all positive dependencies with weight 0
         if node.sign == Sign.NoSign:
             weight = 0
-        else:
+        # add negative dependencies of private predicates with weight -1
+        elif self._is_private(body_pred):
             weight = -1
+        # ignore negative dependencies of public predicates
+        else:
+            return node
 
         self.graph.add_edge(self.current_head, body_pred, weight=weight)
 
