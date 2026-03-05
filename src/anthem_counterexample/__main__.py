@@ -24,7 +24,7 @@ def main() -> None:
 
     # logging
     configure_logging(sys.stderr, args.log, sys.stderr.isatty())
-    get_logger("main")
+    log = get_logger("main")
 
     left_normalized = normalize_program(parse_program(args.left))
     right_normalized = normalize_program(parse_program(args.right))
@@ -52,6 +52,12 @@ def main() -> None:
         inputs=inputs,
         outputs=outputs,
     )
+
+    if args.guess_and_check is None:
+        if opts.use_gc:
+            log.info("EVA condition could not be verified, using guess and check transformation.")
+        else:
+            log.info("EVA condition was verified.")
 
     # collect all program parts
     progs = Programs(
