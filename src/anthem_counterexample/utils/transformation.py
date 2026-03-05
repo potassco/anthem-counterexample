@@ -141,7 +141,7 @@ def aggregate_constraint(aggregate: AST, body: Sequence[AST]) -> AST:
     if aggregate.ast_type not in [ASTType.Aggregate, ASTType.BodyAggregate]:
         raise RuntimeError(f"Argument is not an aggregate {aggregate}")
 
-    constraint_body = body
+    constraint_body = list(body)
     constraint_body.append(
         Literal(
             location=LOC,
