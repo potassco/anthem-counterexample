@@ -23,7 +23,7 @@ from .utils.transformation import DIFF_PREDICATE, DOMAIN_PREDICATE, PREDICATE_SU
 log = get_logger(__name__)
 
 
-def _normalize_program(prog: list[AST]) -> list[AST]:
+def normalize_program(prog: list[AST]) -> list[AST]:
     """
     Normalize a logic program.
     """
@@ -84,7 +84,7 @@ def get_generate_program(inputs: set[Predicate]) -> str:
     prog_str = "\n".join(prog)
 
     log.debug("Generate program")
-    log.debug(prog_str + "\n")
+    log.debug(prog_str + "\n")  # pylint: disable=logging-not-lazy
 
     return prog_str
 
@@ -133,7 +133,7 @@ def get_difference_program(outputs: set[Predicate], use_gc: bool = False) -> str
     prog_str = "\n".join(prog)
 
     log.debug("Difference program")
-    log.debug(prog_str + "\n")
+    log.debug(prog_str + "\n")  # pylint: disable=logging-not-lazy
 
     return prog_str
 
@@ -142,4 +142,4 @@ def get_public_reduct(prog: list[AST], outputs: set[Predicate]) -> list[AST]:
     """
     Get the public reduct of the program in filename.
     """
-    return _public_reduct(_normalize_program(prog), outputs)
+    return _public_reduct(prog, outputs)
