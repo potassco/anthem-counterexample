@@ -84,7 +84,7 @@ def get_generate_program(inputs: set[Predicate]) -> str:
     prog_str = "\n".join(prog)
 
     log.debug("Generate program")
-    log.debug(prog_str + "\n")
+    log.debug(prog_str + "\n")  # pylint: disable=logging-not-lazy
 
     return prog_str
 
@@ -133,7 +133,7 @@ def get_difference_program(outputs: set[Predicate], use_gc: bool = False) -> str
     prog_str = "\n".join(prog)
 
     log.debug("Difference program")
-    log.debug(prog_str + "\n")
+    log.debug(prog_str + "\n")  # pylint: disable=logging-not-lazy
 
     return prog_str
 
