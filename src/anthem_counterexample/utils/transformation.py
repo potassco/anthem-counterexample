@@ -55,6 +55,14 @@ def atom_to_predicate(atom: AST) -> Predicate:
 
     fun = atom.symbol
 
+    if fun.ast_type is not ASTType.Function:
+        if fun.ast_type == ASTType.Pool:
+            fun = fun.arguments[0]
+        else:
+            raise RuntimeError(
+                f"Unexpected symbolic atom whose symbol is not a function or pool {atom}, symbol is {atom.symbol.ast_type}"
+            )
+
     return Predicate(fun.name, len(fun.arguments))
 
 
