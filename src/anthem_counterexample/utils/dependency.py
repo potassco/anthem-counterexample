@@ -2,8 +2,10 @@
 Module for checking dependencies in a logic program.
 """
 
+from abc import ABC, abstractmethod
+
 from clingo.ast import AST, ASTType, Sign, Transformer
-from networkx import DiGraph, MultiDiGraph, simple_cycles, strongly_connected_components
+from networkx import MultiDiGraph, simple_cycles, strongly_connected_components
 
 from . import Predicate
 from .logging import get_logger
@@ -56,19 +58,15 @@ def has_recursive_aggregates(program: list[AST]) -> bool:
     return bool(cycles)
 
 
-class SignedDependencyGraphBuilder(Transformer):
+class DependencyGraphBuilder(Transformer, ABC):
     """
-    Transformer to build a predicate dependency graph.
+    Base class for dependency graphs.
     """
 
-    def __init__(self, public_predicates: set[Predicate]):
+    def __init__(self) -> None:
         super().__init__()
-        self.graph = MultiDiGraph()
+        self.graph: MultiDiGraph[Predicate] = MultiDiGraph()  # pylint: disable=unsubscriptable-object
         self.current_head: Predicate | None = None
-        self._public_predicates = public_predicates
-
-    def _is_private(self, pred: Predicate):
-        return pred not in self._public_predicates
 
     def visit_Rule(self, node: AST) -> AST:  # pylint: disable=invalid-name
         """
@@ -94,6 +92,26 @@ class SignedDependencyGraphBuilder(Transformer):
             self.visit_sequence(node.body)
 
         return node
+
+    @abstractmethod
+    def visit_Literal(self, node: AST) -> AST:  # pylint: disable=invalid-name
+        """
+        Subclasses implement adding dependencies for literals.
+        """
+        raise NotImplementedError
+
+
+class SignedDependencyGraphBuilder(DependencyGraphBuilder):
+    """
+    Transformer to build a predicate dependency graph.
+    """
+
+    def __init__(self, public_predicates: set[Predicate]) -> None:
+        super().__init__()
+        self._public_predicates = public_predicates
+
+    def _is_private(self, pred: Predicate) -> bool:
+        return pred not in self._public_predicates
 
     def visit_Literal(self, node: AST) -> AST:  # pylint: disable=invalid-name
         """
@@ -125,61 +143,55 @@ class SignedDependencyGraphBuilder(Transformer):
         return node
 
 
-class AggregateDependencyGraphBuilder(Transformer):
+class AggregateDependencyGraphBuilder(DependencyGraphBuilder):
     """
     Build an aggregate dependency graph.
     """
 
-    def __init__(self):
-        super().__init__()
-        self.graph = DiGraph()
-        self.current_head: Predicate | None = None
-
-    def visit_Rule(self, node: AST) -> AST:  # pylint: disable=invalid-name
+    def _extend_predicates_by_literal(self, node: AST, predicates: set[Predicate]) -> set[Predicate]:
         """
-        Process each rule: add head predicate as node and process body.
+        Extend a set of predicates by the predicate of a literal.
         """
-        self.current_head = None
+        if node.ast_type != ASTType.Literal:
+            raise ValueError(f"The AST node is not a literal: {node}")
 
-        if node.head.ast_type == ASTType.Literal:
-            if node.head.atom.ast_type == ASTType.SymbolicAtom:
-                pred = atom_to_predicate(node.head.atom)
-                self.graph.add_node(pred)
-                self.current_head = pred
-                self.visit_sequence(node.body)
-        elif node.head.ast_type == ASTType.Aggregate:
-            if len(node.head.elements) > 1:
-                raise ValueError(f"Choice rule should not have more than 1 element: {node}")
+        atom = node.atom
+        if atom.ast_type == ASTType.SymbolicAtom:
+            predicates.add(atom_to_predicate(atom))
 
-            atom = node.head.elements[0].atom
-            pred = atom_to_predicate(atom)
-            self.graph.add_node(pred)
-            self.current_head = pred
-            self.visit_sequence(node.body)
+        return predicates
 
-        return node
+    def _predicates_in_aggregate(self, node: AST) -> set[Predicate]:
+        """
+        Get the set of predicates occurring in an aggregate.
+        """
+        preds: set[Predicate] = set()
+        match node.ast_type:
+            case ASTType.BodyAggregate:
+                for elem in node.elements:
+                    for lit in elem.condition:
+                        preds = self._extend_predicates_by_literal(lit, preds)
+            case ASTType.Aggregate:
+                for elem in node.elements:
+                    preds = self._extend_predicates_by_literal(elem.literal, preds)
+
+                    for lit in elem.condition:
+                        preds = self._extend_predicates_by_literal(lit, preds)
+            case _:
+                raise ValueError(f"The AST node is not an aggregate: {node}")
+
+        return preds
 
     def visit_Literal(self, node: AST) -> AST:  # pylint: disable=invalid-name
         """
         Process body literals: add a edge for each predicate in an aggregate.
         """
-        if node.atom.ast_type == ASTType.BodyAggregate:
-            aggregate = node.atom
-            for elem in aggregate.elements:
-                for lit in elem.condition:
-                    if lit.atom.ast_type == ASTType.SymbolicAtom:
-                        pred = atom_to_predicate(lit.atom)
-                        self.graph.add_edge(self.current_head, pred)
-        elif node.atom.ast_type == ASTType.Aggregate:
-            aggregate = node.atom
-            for elem in aggregate.elements:
-                lit = elem.literal
-                if lit.atom.ast_type == ASTType.SymbolicAtom:
-                    pred = atom_to_predicate(lit.atom)
-                    self.graph.add_edge(self.current_head, pred)
-                for lit in elem.condition:
-                    if lit.atom.ast_type == ASTType.SymbolicAtom:
-                        pred = atom_to_predicate(lit.atom)
-                        self.graph.add_edge(self.current_head, pred)
+        if self.current_head is None:
+            return node
+
+        if node.atom.ast_type in (ASTType.BodyAggregate, ASTType.Aggregate):
+            preds = self._predicates_in_aggregate(node.atom)
+            for pred in preds:
+                self.graph.add_edge(self.current_head, pred)
 
         return node
