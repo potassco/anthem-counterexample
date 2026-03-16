@@ -9,9 +9,9 @@ from .transformation import (
     ChoiceGuardNormalizer,
     ChoiceTermNormalizer,
     HeadAggregateNormalizer,
+    NormalizeHead,
     RejectDisjunctions,
     RemoveHeadCondition,
-    RemoveHeadNegation,
     ReplacePositiveOutputPredicates,
     TransformRuleHeads,
 )
@@ -34,7 +34,7 @@ def normalize_program(prog: list[AST]) -> list[AST]:
         ChoiceTermNormalizer,
         ChoiceGuardNormalizer,
         ChoiceElementNormalizer,
-        RemoveHeadNegation,
+        NormalizeHead,
     ]:
         prog = apply_transformer(t(), prog)
         log.debug("Program after applying %s", t.__name__)
