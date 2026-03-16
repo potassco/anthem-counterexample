@@ -12,6 +12,7 @@ from clingo.ast import (
     Function,
     Literal,
     Location,
+    Pool,
     Position,
     Rule,
     Sign,
@@ -20,6 +21,9 @@ from clingo.ast import (
 )
 
 from . import Predicate
+from .logging import get_logger
+
+log = get_logger(__name__)
 
 # TODO: this has to be a new suffix (i.e. no predicate can end in this suffix)
 PREDICATE_SUFFIX = "'"
@@ -73,20 +77,38 @@ def map_atom(atom: AST) -> AST:
     if atom.ast_type is not ASTType.SymbolicAtom:
         raise RuntimeError(f"Argument is not a symbolic atom {atom}")
 
-    fun = atom.symbol
+    term = atom.symbol
 
-    new_name = fun.name + PREDICATE_SUFFIX
+    match term.ast_type:
+        case ASTType.Function:
+            new_atom = SymbolicAtom(symbol=_map_function(term))
+            return new_atom
+        case ASTType.Pool:
+            log.debug(f"arguments of {term} with {len(term.arguments)} arguments")
+            new_arguments = []
+            for arg in term.arguments:
+                new_arguments.append(_map_function(arg))
+            new_atom = SymbolicAtom(symbol=Pool(location=LOC, arguments=new_arguments))
+            return new_atom
+        case _:
+            log.error("term %s with unexpected type %s", term, term.ast_type)
 
-    new_atom = SymbolicAtom(
-        symbol=Function(
-            location=fun.location,
-            name=new_name,
-            arguments=fun.arguments,
-            external=fun.external,
-        )
+    return atom
+
+
+def _map_function(function: AST) -> AST:
+    if function.ast_type is not ASTType.Function:
+        raise RuntimeError(f"Argument is not a function {function}")
+
+    new_name = function.name + PREDICATE_SUFFIX
+    new_function = Function(
+        location=function.location,
+        name=new_name,
+        arguments=function.arguments,
+        external=function.external,
     )
 
-    return new_atom
+    return new_function
 
 
 def unmap_atom(atom: AST) -> AST:
