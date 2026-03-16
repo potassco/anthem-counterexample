@@ -13,6 +13,7 @@ from clingo.ast import (
     Location,
     Rule,
     Sign,
+    SymbolicAtom,
     Transformer,
     Variable,
 )
@@ -25,6 +26,47 @@ log = get_logger(__name__)
 
 def _is_choice(head: AST) -> bool:
     return head.ast_type == ASTType.Aggregate
+
+
+class ChoicePoolNormalizer(Transformer):
+    """
+    Remove choices over pools.
+
+    E.g. { p(1;2) } :- body. is turned into:
+    { p(1) } :- body. and
+    { p(2) } :- body.
+    """
+
+    def visit_Rule(self, node: AST) -> AST | list[AST]:  # pylint: disable=invalid-name
+        """
+        Transform choice rules over a pool.
+        """
+        head = node.head
+        if not _is_choice(head):
+            return node
+
+        if len(head.elements) != 1:
+            raise RuntimeError(f"Choice rule with unexpected number of elements {node}")
+
+        element = head.elements[0]
+        atom = element.literal.atom
+        symbol = atom.symbol
+
+        if symbol.ast_type == ASTType.Pool:
+            new_rules = []
+
+            for arg in symbol.arguments:
+                new_rules.append(
+                    Rule(
+                        location=LOC,
+                        head=SymbolicAtom(symbol=arg),
+                        body=node.body,
+                    )
+                )
+
+            return new_rules
+
+        return node
 
 
 class ChoiceTermNormalizer(Transformer):
@@ -121,11 +163,16 @@ class ChoiceTermNormalizer(Transformer):
         new_elements = []
 
         for elem in head.elements:
-            # check if choice atom contains pool or interval
             atom = elem.literal.atom
             symbol = atom.symbol
+
+            if symbol.ast_type != ASTType.Function:
+                raise RuntimeError(f"Unexpected element {elem} in rule {node}")
+
             new_condition = list(elem.condition)
 
+            # rewrite each term by replacing with a fresh variable if term is pool/interval
+            # the equality between the new variable and the original term is added to new_condition
             new_args = [self._rewrite_term(arg, new_condition) for arg in symbol.arguments]
 
             new_symbol = symbol.update(arguments=new_args)
@@ -187,8 +234,8 @@ class ChoiceElementNormalizer(Transformer):
     Normalize choice heads.
 
     E.g. { l1 : L1 ; l2 : L2 } :- body. is turned into:
-    { l1 } :- body, L1. and
-    { l2 } :- body, L2.
+    { l1 : L1 } :- body, L1. and
+    { l2 : L2 } :- body, L2.
     """
 
     def visit_Rule(self, node: AST) -> AST | list[AST]:  # pylint: disable=invalid-name
@@ -204,27 +251,57 @@ class ChoiceElementNormalizer(Transformer):
 
         # construct a new rule for each element of the choice
         for elem in head.elements:
+            log.debug(f"elem is {elem} of type {elem.ast_type}")
             # the new choice head
             choice = Aggregate(
                 location=LOC,
                 left_guard=None,
-                elements=[elem.literal],
+                elements=[elem],
                 right_guard=None,
             )
-
-            # new body is the old body and any elements of the conditional
-            new_body = []
-            for lit in node.body:
-                new_body.append(lit)
-            for cond in elem.condition:
-                new_body.append(cond)
 
             new_rules.append(
                 Rule(
                     location=LOC,
                     head=choice,
-                    body=new_body,
+                    body=node.body,
                 )
             )
 
         return new_rules
+
+
+class ChoiceConditionNormalizer(Transformer):
+    """
+    Normalize conditions in choice heads.
+
+    E.g. { l : L } :- body. is turned into:
+    { l } :- body, L.
+    """
+
+    def visit_Rule(self, node: AST) -> AST | list[AST]:  # pylint: disable=invalid-name
+        """
+        Transform choice rules.
+        """
+        head = node.head
+
+        if not _is_choice(head):
+            return node
+
+        if len(head.elements) != 1:
+            raise RuntimeError(f"Choice rule with unexpected number of elements {node}")
+
+        element = head.elements[0]
+
+        new_head = Aggregate(
+            location=LOC,
+            left_guard=None,
+            elements=[element.literal],
+            right_guard=None,
+        )
+
+        new_body = node.body
+        for cond in element.condition:
+            new_body.append(cond)
+
+        return Rule(location=LOC, head=new_head, body=new_body)

@@ -5,8 +5,10 @@ Module to get counterexample program.
 from clingo.ast import AST
 
 from .transformation import (
+    ChoiceConditionNormalizer,
     ChoiceElementNormalizer,
     ChoiceGuardNormalizer,
+    ChoicePoolNormalizer,
     ChoiceTermNormalizer,
     HeadAggregateNormalizer,
     NormalizeHead,
@@ -31,9 +33,11 @@ def normalize_program(prog: list[AST]) -> list[AST]:
         RejectDisjunctions,
         RemoveHeadCondition,
         HeadAggregateNormalizer,
-        ChoiceTermNormalizer,
         ChoiceGuardNormalizer,
         ChoiceElementNormalizer,
+        ChoicePoolNormalizer,
+        ChoiceTermNormalizer,
+        ChoiceConditionNormalizer,
         NormalizeHead,
     ]:
         prog = apply_transformer(t(), prog)
