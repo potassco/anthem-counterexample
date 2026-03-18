@@ -170,7 +170,7 @@ class SignedDependencyGraphBuilder(DependencyGraphBuilder):
 
             pred = self._add_node_and_set_current(node.head.elements[0].atom)
 
-            if not self._is_private(pred):
+            if self._is_private(pred):
                 self.graph.add_edge(pred, pred, weight=-1)
 
             self.visit_sequence(node.body)
