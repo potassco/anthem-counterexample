@@ -101,6 +101,16 @@ class DependencyGraphBuilder(Transformer, ABC):
         self.graph: MultiDiGraph[Predicate] = MultiDiGraph()  # pylint: disable=unsubscriptable-object
         self.current_head: Predicate | None = None
 
+    def _add_node_and_set_current(self, atom: AST) -> Predicate:
+        if atom.ast_type != ASTType.SymbolicAtom:
+            raise RuntimeError(f"Unexpected atom {atom}")
+
+        pred = atom_to_predicate(atom)
+        self.graph.add_node(pred)
+        self.current_head = pred
+
+        return pred
+
     def visit_Rule(self, node: AST) -> AST:  # pylint: disable=invalid-name
         """
         Process each rule: add head predicate as node and process body.
@@ -109,19 +119,14 @@ class DependencyGraphBuilder(Transformer, ABC):
 
         if node.head.ast_type == ASTType.Literal:
             if node.head.atom.ast_type == ASTType.SymbolicAtom:
-                pred = atom_to_predicate(node.head.atom)
-                self.graph.add_node(pred)
-                self.current_head = pred
+                self._add_node_and_set_current(node.head.atom)
                 self.visit_sequence(node.body)
 
         elif node.head.ast_type == ASTType.Aggregate:
             if len(node.head.elements) > 1:
                 raise ValueError(f"Choice rule should not have more than 1 element: {node}")
 
-            atom = node.head.elements[0].atom
-            pred = atom_to_predicate(atom)
-            self.graph.add_node(pred)
-            self.current_head = pred
+            self._add_node_and_set_current(node.head.elements[0].atom)
             self.visit_sequence(node.body)
 
         return node
