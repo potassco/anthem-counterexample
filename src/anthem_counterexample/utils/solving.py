@@ -2,9 +2,12 @@
 Module to solve counterexample programs.
 """
 
+from tempfile import NamedTemporaryFile
+
 from clingo.control import Control
 from clingo.solving import Model
 from clingo.symbol import Symbol
+from guess_and_check import solve_guess_and_check
 
 from . import Predicate
 from .logging import get_logger
@@ -98,6 +101,23 @@ def solve_for_counterexample(  # pylint: disable=too-many-positional-arguments
         domain_size += 1
 
 
+def _solve_gc_with_size(
+    guess: str,
+    check: str,
+    direction: str,
+    size: int,
+    inputs: set[Predicate],
+    outputs: set[Predicate],
+) -> bool:
+    with (
+        NamedTemporaryFile(mode="w", delete=False) as guess_file,
+        NamedTemporaryFile(mode="w", delete=False) as check_file,
+    ):
+        guess_file.write(guess)
+        check_file.write(check)
+        return solve_guess_and_check(["-c", f"domain_size={size}"], False, False, [guess_file.name], [check_file.name])
+
+
 def solve_gc_for_counterexample(  # pylint: disable=too-many-positional-arguments
     forward_guess: str | None,
     forward_check: str | None,
@@ -111,4 +131,21 @@ def solve_gc_for_counterexample(  # pylint: disable=too-many-positional-argument
     """
     Solve the given guess and check EQT programs for counterexamples by increasing the domain size from start to max.
     """
-    log.error("solving for guess and check not yet implemented")
+    domain_size = domain_start
+    while True:
+        # stop if the domain size is larger than the limit
+        if domain_max is not None and domain_size > domain_max:
+            print(f"No counterexample was found for the domain size max of {domain_max}")
+            break
+
+        print(f"Solving for counterexample of domain size {domain_size}")
+
+        if forward_guess and forward_check:
+            if _solve_gc_with_size(forward_guess, forward_check, "forward", domain_size, inputs, outputs):
+                break
+
+        if backward_guess and backward_check:
+            if _solve_gc_with_size(backward_guess, backward_check, "backward", domain_size, inputs, outputs):
+                break
+
+        domain_size += 1
