@@ -55,7 +55,7 @@ def main() -> None:
 
     if args.guess_and_check is None:
         if opts.use_gc:
-            log.info("EVA condition could not be verified, using guess and check transformation.")
+            log.warning("EVA condition could not be verified, using guess and check transformation.")
         else:
             log.info("EVA condition was verified.")
 
