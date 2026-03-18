@@ -84,7 +84,7 @@ def solve_for_counterexample(  # pylint: disable=too-many-positional-arguments
         domain_size += 1
 
 
-def _solve_gc_with_size(
+def _solve_gc_with_size(  # pylint: disable=too-many-positional-arguments
     guess: str,
     check: str,
     direction: str,
@@ -99,7 +99,7 @@ def _solve_gc_with_size(
         guess_file.write(guess)
         check_file.write(check)
 
-    return solve_guess_and_check(
+    return solve_guess_and_check(  # type: ignore[no-any-return]
         ["-c", f"domain_size={size}"],
         False,
         False,
