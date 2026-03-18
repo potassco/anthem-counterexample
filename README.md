@@ -30,6 +30,11 @@ input: q/1.
 output: r/1.
 ```
 
+### Supported programs
+
+Note that programs containing disjunctions or recursive aggregates are not
+supported.
+
 ### Output
 
 If a counterexample is found the output indicates the input for the
