@@ -2,13 +2,15 @@
 Module to solve counterexample programs.
 """
 
+from tempfile import NamedTemporaryFile
+
 from clingo.control import Control
 from clingo.solving import Model
 from clingo.symbol import Symbol
+from guess_and_check import solve_guess_and_check
 
 from . import Predicate
 from .logging import get_logger
-from .transformation import DIFF_PREDICATE, PREDICATE_SUFFIX, UNSAT_PREDICATE
 
 log = get_logger(__name__)
 
@@ -22,17 +24,9 @@ def _on_model(direction: str, size: int, inputs: set[Predicate], outputs: set[Pr
     symbols = model.symbols(atoms=True)
     counterexample_input = []
     stable_model = []
-    model_public_reduct = []
 
     for symbol in symbols:
         pred = _symbol_to_predicate(symbol)
-
-        # filter out diff predicate
-        if pred.name == DIFF_PREDICATE:
-            continue
-
-        if pred.name == UNSAT_PREDICATE:
-            model_public_reduct.append(str(symbol))
 
         if pred in inputs:
             counterexample_input.append(str(symbol))
@@ -40,19 +34,11 @@ def _on_model(direction: str, size: int, inputs: set[Predicate], outputs: set[Pr
         if pred in outputs:
             stable_model.append(str(symbol))
 
-        if pred.name.endswith(PREDICATE_SUFFIX):
-            original_predicate = Predicate(pred.name.removesuffix(PREDICATE_SUFFIX), pred.arity)
-            if original_predicate in outputs:
-                model_public_reduct.append(str(symbol))
-
     print("  Input for the counterexample:")
     print("    " + ", ".join(counterexample_input))
 
-    print("  Stable model:")
+    print(f"  External behavior of {'left' if direction == 'forward' else 'right'}:")
     print("    " + ", ".join(stable_model))
-
-    print("  Model of the public reduct:")
-    print("    " + ", ".join(model_public_reduct))
 
 
 def _solve_with_size(eqt: str, direction: str, size: int, inputs: set[Predicate], outputs: set[Predicate]) -> bool:
@@ -98,6 +84,59 @@ def solve_for_counterexample(  # pylint: disable=too-many-positional-arguments
         domain_size += 1
 
 
+def _solve_gc_with_size(  # pylint: disable=too-many-positional-arguments
+    guess: str,
+    check: str,
+    direction: str,
+    size: int,
+    inputs: set[Predicate],
+    outputs: set[Predicate],
+) -> bool:
+    with (
+        NamedTemporaryFile(mode="w", delete=False) as guess_file,
+        NamedTemporaryFile(mode="w", delete=False) as check_file,
+    ):
+        guess_file.write(guess)
+        check_file.write(check)
+
+    return solve_guess_and_check(  # type: ignore[no-any-return]
+        ["-c", f"domain_size={size}"],
+        False,
+        False,
+        [guess_file.name],
+        [check_file.name],
+        on_model=lambda m: _on_model(direction, size, inputs, outputs, m),
+    )
+
+
+def _get_holds(predicates: set[Predicate], undo: bool = False) -> str:
+    """
+    Get a program mapping all predicates into holds/1, or undoing this mapping.
+    """
+    prog = []
+
+    for pred in predicates:
+        variables = ""
+        for i in range(pred.arity):
+            if i > 0:
+                variables += ","
+            variables += f"X{i}"
+        if not undo:
+            if pred.arity == 0:
+                prog.append(f"holds({pred.name}) :- {pred.name}.")
+            else:
+                prog.append(f"holds({pred.name}({variables})) :- {pred.name}({variables}).")
+        else:
+            if pred.arity == 0:
+                prog.append(f"{pred.name} :- holds({pred.name}).")
+            else:
+                prog.append(f"{pred.name}({variables}) :- holds({pred.name}({variables})).")
+
+    prog_str = "\n".join(prog)
+
+    return prog_str
+
+
 def solve_gc_for_counterexample(  # pylint: disable=too-many-positional-arguments
     forward_guess: str | None,
     forward_check: str | None,
@@ -111,4 +150,33 @@ def solve_gc_for_counterexample(  # pylint: disable=too-many-positional-argument
     """
     Solve the given guess and check EQT programs for counterexamples by increasing the domain size from start to max.
     """
-    log.error("solving for guess and check not yet implemented")
+    holds = _get_holds(inputs | outputs)
+    undo_holds = _get_holds(inputs | outputs, undo=True)
+
+    if forward_guess:
+        forward_guess += holds
+    if forward_check:
+        forward_check += undo_holds
+    if backward_guess:
+        backward_guess += holds
+    if backward_check:
+        backward_check += undo_holds
+
+    domain_size = domain_start
+    while True:
+        # stop if the domain size is larger than the limit
+        if domain_max is not None and domain_size > domain_max:
+            print(f"No counterexample was found for the domain size max of {domain_max}")
+            break
+
+        print(f"Solving for counterexample of domain size {domain_size}")
+
+        if forward_guess and forward_check:
+            if _solve_gc_with_size(forward_guess, forward_check, "forward", domain_size, inputs, outputs):
+                break
+
+        if backward_guess and backward_check:
+            if _solve_gc_with_size(backward_guess, backward_check, "backward", domain_size, inputs, outputs):
+                break
+
+        domain_size += 1

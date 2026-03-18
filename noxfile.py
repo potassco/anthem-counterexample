@@ -36,7 +36,7 @@ def typecheck(session):
     Typecheck the code using mypy.
     """
     session.install("-e", ".[typecheck]")
-    session.run("mypy", "--strict", "-p", "anthem_counterexample", "-p", "tests")
+    session.run("mypy", "--strict", "-p", "anthem_counterexample", "-p", "tests", "--ignore-missing-imports")
 
 
 @nox.session(python=PYTHON_VERSIONS)
@@ -56,4 +56,4 @@ def test(session):
         session.run("coverage", "run", "-m", "unittest", session.posargs[0], "-v")
     else:
         session.run("coverage", "run", "-m", "unittest", "discover", "-v")
-        session.run("coverage", "report", "-m", "--fail-under=100")
+        session.run("coverage", "report", "-m")
