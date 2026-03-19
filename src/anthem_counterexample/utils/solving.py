@@ -117,7 +117,7 @@ def _get_holds(predicates: set[Predicate], undo: bool = False) -> str:
     """
     Get a program mapping all predicates into holds/1, or undoing this mapping.
     """
-    prog = []
+    prog = ["#defined holds/1."]
 
     for pred in predicates:
         variables = ""
