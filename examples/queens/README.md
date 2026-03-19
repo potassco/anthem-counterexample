@@ -24,5 +24,5 @@ This can be verified by running
 anthem-counterexample left.lp right.lp queens.ug --direction backward --max 0
 ```
 
-Note that we use a maximum domain size of `0` to make checking terminating. We
-can do so here as our programs do not have inputs.
+Note that we use a maximum domain size of `0` to ensure termination. We can do
+so here as our programs do not have inputs.

@@ -41,7 +41,7 @@ If a counterexample is found the output indicates the input for the
 counterexample as well as the external behavior of one program which is not an
 external behavior of the second program. For example
 
-```bash
+```
 ...
 Found a counterexample for domain size 1 in the forward direction
   Input for the counterexample:

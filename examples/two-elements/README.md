@@ -24,8 +24,8 @@ equivalent.)
 
 ## Less than two elements
 
-In the second case the program `right-inverted.lp` modifies `left.lp` adding a
-constraint forbidding that `p` holds for two different values.
+In the second case the program `right-inverted.lp` modifies `left.lp` by adding
+a constraint forbidding that `p` holds for two different values.
 
 Running the command
 

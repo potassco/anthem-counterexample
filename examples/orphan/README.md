@@ -1,6 +1,6 @@
 # Orphan example
 
-This folder contains a version of the orphan examples from
+This folder contains a version of the orphan example from
 
 > Jorge Fandinno, Zachary Hansen, Yuliya Lierler, Vladimir Lifschitz, Nathan
 > Temple. External Behavior of a Logic Program and Verification of Refactoring.
