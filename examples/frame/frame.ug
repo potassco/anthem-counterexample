@@ -1,0 +1,5 @@
+input: horizon/1.
+input: in0/2.
+input: goto/3.
+input: person/1.
+output: in/3.
