@@ -11,6 +11,7 @@ from guess_and_check import solve_guess_and_check
 
 from . import Predicate
 from .logging import get_logger
+from .transformation import SIZE_PLACEHOLDER
 
 log = get_logger(__name__)
 
@@ -45,7 +46,7 @@ def _solve_with_size(eqt: str, direction: str, size: int, inputs: set[Predicate]
     """
     Solve an EQT program with the given domain size and return whether a counterexample was found.
     """
-    ctl = Control(["-c", f"domain_size={size}"])
+    ctl = Control(["-c", f"{SIZE_PLACEHOLDER}={size}"])
     ctl.add(eqt)
     ctl.ground()
     ret = ctl.solve(on_model=lambda m: _on_model(direction, size, inputs, outputs, m))
@@ -104,7 +105,7 @@ def _solve_gc_with_size(  # pylint: disable=too-many-positional-arguments
         check_file.write(check)
 
     return solve_guess_and_check(  # type: ignore[no-any-return]
-        ["-c", f"domain_size={size}"],
+        ["-c", f"{SIZE_PLACEHOLDER}={size}"],
         False,
         False,
         [guess_file.name],

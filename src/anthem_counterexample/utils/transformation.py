@@ -29,6 +29,7 @@ PREDICATE_SUFFIX = "__"
 UNSAT_PREDICATE = "__unsat"
 DIFF_PREDICATE = "__diff"
 DOMAIN_PREDICATE = "__dom"
+SIZE_PLACEHOLDER = "domain_size"
 
 LOC = Location(Position("<string>", 1, 1), Position("<string>", 1, 1))
 

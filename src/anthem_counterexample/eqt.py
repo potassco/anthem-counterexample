@@ -20,7 +20,14 @@ from .transformation import (
 from .utils import Predicate
 from .utils.logging import get_logger
 from .utils.output import program_to_str
-from .utils.transformation import DIFF_PREDICATE, DOMAIN_PREDICATE, PREDICATE_SUFFIX, UNSAT_PREDICATE, apply_transformer
+from .utils.transformation import (
+    DIFF_PREDICATE,
+    DOMAIN_PREDICATE,
+    PREDICATE_SUFFIX,
+    SIZE_PLACEHOLDER,
+    UNSAT_PREDICATE,
+    apply_transformer,
+)
 
 log = get_logger(__name__)
 
@@ -64,7 +71,7 @@ def get_generate_program(inputs: set[Predicate]) -> str:
     Get the program to generate inputs.
     """
     # start constructing the program as a list of rules (represented as strings)
-    prog = ["#const domain_size=0.", f"{DOMAIN_PREDICATE}(1..domain_size)."]
+    prog = [f"#const {SIZE_PLACEHOLDER}=0.", f"{DOMAIN_PREDICATE}(1..{SIZE_PLACEHOLDER})."]
 
     for pred in inputs:
         # construct list of variables (i.e. X0, X1, ...) and body (i.e. dom(X0), dom(X1), ...)
