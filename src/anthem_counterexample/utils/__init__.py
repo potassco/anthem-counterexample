@@ -2,7 +2,7 @@
 Utilities.
 """
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, fields, replace
 from enum import Enum, auto
 from typing import Any
 
@@ -149,12 +149,24 @@ class Auxiliaries:
         """Get a Auxiliaries object with certain values replaced."""
         return replace(self, **kwargs)
 
+    def replace_values(self, replacements: dict[str, str]) -> "Auxiliaries":
+        str_replacements = {}
+        for pred in replacements:
+            str_replacements[pred.name] = replacements[pred].name
+        updates = {
+            f.name: str_replacements[getattr(self, f.name)]
+            for f in fields(self)
+            if getattr(self, f.name) in str_replacements
+        }
+        return self.replace(**updates)
+
     def predicates(self) -> set[Predicate]:
         """Get all auxiliary predicates."""
-        preds = set()
-        preds.add(Predicate(self.unsat, 0))
-        preds.add(Predicate(self.diff, 0))
-        preds.add(Predicate(self.domain, 1))
+        preds = {
+            Predicate(self.unsat, 0),
+            Predicate(self.diff, 0),
+            Predicate(self.domain, 1),
+        }
         return preds
 
 

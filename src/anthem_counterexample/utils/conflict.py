@@ -15,10 +15,11 @@ def check_and_rename_auxiliaries(
     left: list[AST], right: list[AST], publics: set[Predicate], aux: Auxiliaries
 ) -> Auxiliaries:
     privates = _collect_privates(left + right, publics)
-    conflict_predicates = _conflicting_predicates(publics | privates, aux.predicates())
+    predicates = publics | privates
+    conflict_predicates = _conflicting_predicates(predicates, aux.predicates())
     if conflict_predicates:
-        log.error("Renaming of conflicting auxiliary predicates not yet supported")
-        raise RuntimeError(f"Found conflicting auxiliary predicates {[str(p) for p in conflict_predicates]}")
+        replacements, predicates = _get_replacements(conflict_predicates, predicates)
+        aux = aux.replace_values(replacements)
 
     placeholders = _collect_placeholders(left + right)
     if aux.size in placeholders:
@@ -42,10 +43,45 @@ def check_and_rename_privates(
     privates_right = _collect_privates(right, publics)
     conflicts = _conflicting_predicates(privates_left, privates_right)
     if conflicts:
+        replacements, _ = _get_replacements(conflicts, publics | privates_left | privates_right)
+
         log.error("Renaming of conflicting private predicates not yet supported")
         raise RuntimeError(f"Found conflicting private predicates: {[str(p) for p in conflicts]}")
 
+        right = _replace_predicates(right, replacements)
+
     return left, right
+
+
+def _get_replacements(
+    conflicts: set[Predicate], predicates: set[Predicate]
+) -> tuple[dict[Predicate, Predicate], set[Predicate]]:
+    pred_replacements = {}
+    for pred in conflicts:
+        new = _get_replacement_predicate(pred, predicates)
+        pred_replacements[pred] = new
+        predicates.add(new)
+        log.debug("Replacement for %s is %s", pred, new)
+    return pred_replacements, predicates
+
+
+def _get_replacement_predicate(base: Predicate, predicates: set[Predicate]) -> Predicate:
+    """
+    Get a replacement predicate for base that does not conflict with predicates.
+    """
+    i = 0
+    new = Predicate(base.name + f"__{i}", base.arity)
+    while new in predicates:
+        i += 1
+        new = Predicate(base.name + f"__{i}", base.arity)
+
+    return new
+
+
+def _replace_predicates(program: list[AST], replacements: dict[Predicate, Predicate]) -> list[AST]:
+    """
+    Replace all predicates that are part of the replacement dictionary.
+    """
 
 
 def _collect_placeholders(program: list[AST]) -> set[str]:
