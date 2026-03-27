@@ -7,7 +7,7 @@ import sys
 from . import assemble_and_execute
 from .eqt import get_difference_program, get_generate_program, get_public_reduct, normalize_program
 from .utils import Auxiliaries, Direction, Options, Programs
-from .utils.conflict import check_and_rename_privates
+from .utils.conflict import check_and_rename_auxiliaries, check_and_rename_privates
 from .utils.dependency import has_enough_visible_atoms, has_recursive_aggregates
 from .utils.logging import configure_logging, get_logger
 from .utils.parse_program import parse_program, parse_program_as_str
@@ -32,6 +32,9 @@ def main() -> None:
     right = parse_program(args.right)
 
     left, right = check_and_rename_privates(left, right, inputs | outputs)
+
+    auxiliaries = Auxiliaries.default()
+    auxiliaries = check_and_rename_auxiliaries(left, right, inputs | outputs, auxiliaries)
 
     left_normalized = normalize_program(left)
     right_normalized = normalize_program(right)
@@ -58,7 +61,7 @@ def main() -> None:
         inputs=inputs,
         outputs=outputs,
         clingo_args=clingo_args,
-        auxiliaries=Auxiliaries.default(),
+        auxiliaries=auxiliaries,
     )
 
     if args.guess_and_check is None:

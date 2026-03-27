@@ -149,6 +149,13 @@ class Auxiliaries:
         """Get a Auxiliaries object with certain values replaced."""
         return replace(self, **kwargs)
 
+    def predicates(self) -> set[Predicate]:
+        """Get all auxiliary predicates."""
+        preds = set()
+        preds.add(Predicate(self.unsat, 0))
+        preds.add(Predicate(self.diff, 0))
+        preds.add(Predicate(self.domain, 1))
+
 
 @dataclass
 class Options:  # pylint: disable=too-many-instance-attributes
