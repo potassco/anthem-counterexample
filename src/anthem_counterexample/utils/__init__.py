@@ -129,3 +129,4 @@ class Options:  # pylint: disable=too-many-instance-attributes
     use_gc: bool
     inputs: set[Predicate]
     outputs: set[Predicate]
+    clingo_args: list[str]

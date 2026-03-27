@@ -33,7 +33,9 @@ def _assemble_and_execute(programs: Programs, options: Options) -> None:
         )
 
     if options.solve:
-        solve_for_counterexample(forward, backward, options.inputs, options.outputs, options.start, options.max_size)
+        solve_for_counterexample(
+            forward, backward, options.inputs, options.outputs, options.start, options.max_size, options.clingo_args
+        )
     else:
         if options.out_dir:
             save_eqt_to_file(forward, options.out_dir)
@@ -65,6 +67,7 @@ def _assemble_and_execute_gc(programs: Programs, options: Options) -> None:
             options.outputs,
             options.start,
             options.max_size,
+            options.clingo_args,
         )
     else:
         if options.out_dir:

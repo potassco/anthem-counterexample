@@ -80,6 +80,8 @@ To get a full list of available options run
 anthem-counterexample -h
 ```
 
+Any additional arguments are passed along to clingo while solving.
+
 ### EVA condition and the guess and check approach
 
 The so-called enough visible atoms (EVA) condition limits the use of private

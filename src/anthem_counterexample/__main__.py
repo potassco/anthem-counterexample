@@ -20,7 +20,7 @@ def main() -> None:
     """
     # argument parser
     parser = get_parser()
-    args = parser.parse_args()
+    args, clingo_args = parser.parse_known_args()
 
     # logging
     configure_logging(sys.stderr, args.log, sys.stderr.isatty())
@@ -51,6 +51,7 @@ def main() -> None:
         ),
         inputs=inputs,
         outputs=outputs,
+        clingo_args=clingo_args,
     )
 
     if args.guess_and_check is None:
