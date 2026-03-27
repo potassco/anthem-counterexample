@@ -2,12 +2,19 @@
 Utilities.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum, auto
+from typing import Any
 
 from clingo.ast import AST
 
 from .output import program_to_str
+
+PREDICATE_SUFFIX = "__"
+UNSAT_PREDICATE = "__unsat"
+DIFF_PREDICATE = "__diff"
+DOMAIN_PREDICATE = "__dom"
+SIZE_PLACEHOLDER = "domain_size"
 
 
 def build_eqt(generate: str, left: list[AST], public_reduct: list[AST], difference: str, forward: bool = True) -> str:
@@ -115,6 +122,34 @@ class Predicate:
         return f"{self.name}/{str(self.arity)}"
 
 
+@dataclass(frozen=True)
+class Auxiliaries:
+    """
+    Dataclass storing the names of auxiliary predicates, the size placeholder, and the predicate suffix.
+    """
+
+    unsat: str
+    diff: str
+    domain: str
+    size: str
+    suffix: str
+
+    @classmethod
+    def default(cls) -> "Auxiliaries":
+        """Get a default Auxiliaries object."""
+        return cls(
+            unsat=UNSAT_PREDICATE,
+            diff=DIFF_PREDICATE,
+            domain=DOMAIN_PREDICATE,
+            size=SIZE_PLACEHOLDER,
+            suffix=PREDICATE_SUFFIX,
+        )
+
+    def replace(self, **kwargs: Any) -> "Auxiliaries":
+        """Get a Auxiliaries object with certain values replaced."""
+        return replace(self, **kwargs)
+
+
 @dataclass
 class Options:  # pylint: disable=too-many-instance-attributes
     """
@@ -130,3 +165,4 @@ class Options:  # pylint: disable=too-many-instance-attributes
     inputs: set[Predicate]
     outputs: set[Predicate]
     clingo_args: list[str]
+    auxiliaries: Auxiliaries

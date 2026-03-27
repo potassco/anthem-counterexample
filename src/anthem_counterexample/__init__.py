@@ -34,7 +34,14 @@ def _assemble_and_execute(programs: Programs, options: Options) -> None:
 
     if options.solve:
         solve_for_counterexample(
-            forward, backward, options.inputs, options.outputs, options.start, options.max_size, options.clingo_args
+            forward,
+            backward,
+            options.inputs,
+            options.outputs,
+            options.start,
+            options.max_size,
+            options.clingo_args,
+            options.auxiliaries.size,
         )
     else:
         if options.out_dir:
@@ -68,6 +75,7 @@ def _assemble_and_execute_gc(programs: Programs, options: Options) -> None:
             options.start,
             options.max_size,
             options.clingo_args,
+            options.auxiliaries.size,
         )
     else:
         if options.out_dir:

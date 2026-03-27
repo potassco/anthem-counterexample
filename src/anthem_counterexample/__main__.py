@@ -6,7 +6,7 @@ import sys
 
 from . import assemble_and_execute
 from .eqt import get_difference_program, get_generate_program, get_public_reduct, normalize_program
-from .utils import Direction, Options, Programs
+from .utils import Auxiliaries, Direction, Options, Programs
 from .utils.dependency import has_enough_visible_atoms, has_recursive_aggregates
 from .utils.logging import configure_logging, get_logger
 from .utils.parse_program import parse_program, parse_program_as_str
@@ -52,6 +52,7 @@ def main() -> None:
         inputs=inputs,
         outputs=outputs,
         clingo_args=clingo_args,
+        auxiliaries=Auxiliaries.default(),
     )
 
     if args.guess_and_check is None:
@@ -66,13 +67,17 @@ def main() -> None:
     progs = Programs(
         left=parse_program(args.left),
         right=parse_program(args.right),
-        generate=get_generate_program(opts.inputs, assumptions),
-        difference=get_difference_program(opts.outputs, opts.use_gc),
+        generate=get_generate_program(opts.inputs, assumptions, opts.auxiliaries),
+        difference=get_difference_program(opts.outputs, opts.use_gc, opts.auxiliaries),
         public_reduct_left=(
-            get_public_reduct(left_normalized, opts.outputs) if opts.direction.includes_backward() else None
+            get_public_reduct(left_normalized, opts.outputs, opts.auxiliaries)
+            if opts.direction.includes_backward()
+            else None
         ),
         public_reduct_right=(
-            get_public_reduct(right_normalized, opts.outputs) if opts.direction.includes_forward() else None
+            get_public_reduct(right_normalized, opts.outputs, opts.auxiliaries)
+            if opts.direction.includes_forward()
+            else None
         ),
     )
 
