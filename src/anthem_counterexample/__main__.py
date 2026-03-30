@@ -5,10 +5,10 @@ The main entry point for the application.
 import sys
 
 from . import assemble_and_execute
+from .analysis.conflict import check_and_rename_auxiliaries, check_and_rename_privates
+from .analysis.dependency import has_enough_visible_atoms, has_recursive_aggregates
 from .eqt import get_difference_program, get_generate_program, get_public_reduct, normalize_program
 from .utils import Auxiliaries, Direction, Options, Programs
-from .utils.conflict import check_and_rename_auxiliaries, check_and_rename_privates
-from .utils.dependency import has_enough_visible_atoms, has_recursive_aggregates
 from .utils.logging import configure_logging, get_logger
 from .utils.parse_program import parse_program, parse_program_as_str
 from .utils.parse_user_guide import parse_user_guide

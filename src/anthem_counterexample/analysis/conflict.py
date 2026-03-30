@@ -4,10 +4,10 @@ Module for checking for naming conflicts of predicates.
 
 from clingo.ast import AST, ASTType, Transformer
 
-from . import Auxiliaries, Predicate
-from .logging import get_logger
-from .output import program_to_str
-from .transformation import apply_transformer, atom_to_predicate, replace_predicate
+from ..utils import Auxiliaries, Predicate
+from ..utils.logging import get_logger
+from ..utils.output import program_to_str
+from ..utils.transformation import apply_transformer, atom_to_predicate, replace_predicate
 
 log = get_logger(__name__)
 
