@@ -4,11 +4,10 @@ Module to transform a program into its public reduct.
 
 from clingo.ast import AST, ASTType, Function, Literal, Rule, Sign, SymbolicAtom, Transformer
 
-from ..utils import Predicate
+from ..utils import Auxiliaries, Predicate
 from ..utils.logging import get_logger
 from ..utils.transformation import (
     LOC,
-    UNSAT_PREDICATE,
     atom_to_predicate,
     is_mapped_predicate,
     map_atom,
@@ -23,9 +22,10 @@ class ReplacePositiveOutputPredicates(Transformer):
     Replace all positive output predicates by their auxiliary version.
     """
 
-    def __init__(self, outputs: set[Predicate]):
+    def __init__(self, outputs: set[Predicate], auxiliaries: Auxiliaries):
         super().__init__()
         self.outputs = outputs
+        self.suffix = auxiliaries.suffix
 
     def visit_Literal(self, node: AST) -> AST:  # pylint: disable=invalid-name
         """
@@ -57,7 +57,7 @@ class ReplacePositiveOutputPredicates(Transformer):
 
                     if predicate in self.outputs:
                         # change the predicate if it is an output predicate
-                        new_atom = map_atom(atom)
+                        new_atom = map_atom(atom, self.suffix)
                         new_literal = Literal(
                             location=LOC,
                             sign=Sign.NoSign,
@@ -88,9 +88,11 @@ class TransformRuleHeads(Transformer):
       l'   :- body, l.
     """
 
-    def __init__(self, outputs: set[Predicate]):
+    def __init__(self, outputs: set[Predicate], auxiliaries: Auxiliaries):
         super().__init__()
         self.outputs = outputs
+        self.unsat = auxiliaries.unsat
+        self.suffix = auxiliaries.suffix
 
     def visit_Rule(self, node: AST) -> AST:  # pylint: disable=invalid-name
         """
@@ -116,7 +118,7 @@ class TransformRuleHeads(Transformer):
                 atom=SymbolicAtom(
                     Function(
                         location=LOC,
-                        name=UNSAT_PREDICATE,
+                        name=self.unsat,
                         arguments=[],
                         external=False,
                     )
@@ -147,10 +149,10 @@ class TransformRuleHeads(Transformer):
 
             atom = literal.atom
             # check if the choice atom is a mapped predicate (i.e. was originally an output predicate)
-            if is_mapped_predicate(atom):
+            if is_mapped_predicate(atom, self.suffix):
                 # add the original predicate as a positive literal to the body
                 new_body = node.body
-                original_atom = unmap_atom(atom)
+                original_atom = unmap_atom(atom, self.suffix)
                 original_literal = Literal(
                     location=LOC,
                     sign=Sign.NoSign,

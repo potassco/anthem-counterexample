@@ -25,12 +25,6 @@ from .logging import get_logger
 
 log = get_logger(__name__)
 
-PREDICATE_SUFFIX = "__"
-UNSAT_PREDICATE = "__unsat"
-DIFF_PREDICATE = "__diff"
-DOMAIN_PREDICATE = "__dom"
-SIZE_PLACEHOLDER = "domain_size"
-
 LOC = Location(Position("<string>", 1, 1), Position("<string>", 1, 1))
 
 
@@ -67,7 +61,7 @@ def atom_to_predicate(atom: AST) -> Predicate:
     return Predicate(fun.name, len(fun.arguments))
 
 
-def map_atom(atom: AST) -> AST:
+def map_atom(atom: AST, suffix: str) -> AST:
     """
     Map an atom to its auxiliary version.
     """
@@ -78,12 +72,12 @@ def map_atom(atom: AST) -> AST:
 
     match term.ast_type:
         case ASTType.Function:
-            new_atom = SymbolicAtom(symbol=_map_function(term))
+            new_atom = SymbolicAtom(symbol=_map_function(term, suffix))
             return new_atom
         case ASTType.Pool:
             new_arguments = []
             for arg in term.arguments:
-                new_arguments.append(_map_function(arg))
+                new_arguments.append(_map_function(arg, suffix))
             new_atom = SymbolicAtom(symbol=Pool(location=LOC, arguments=new_arguments))
             return new_atom
         case _:
@@ -92,11 +86,11 @@ def map_atom(atom: AST) -> AST:
     return atom
 
 
-def _map_function(function: AST) -> AST:
+def _map_function(function: AST, suffix: str) -> AST:
     if function.ast_type is not ASTType.Function:
         raise RuntimeError(f"Argument is not a function {function}")
 
-    new_name = function.name + PREDICATE_SUFFIX
+    new_name = function.name + suffix
     new_function = Function(
         location=function.location,
         name=new_name,
@@ -107,19 +101,19 @@ def _map_function(function: AST) -> AST:
     return new_function
 
 
-def _unmap_function(function: AST) -> AST:
+def _unmap_function(function: AST, suffix: str) -> AST:
     if function.ast_type is not ASTType.Function:
         raise RuntimeError(f"Argument is not a function {function}")
 
     return Function(
         location=function.location,
-        name=function.name.removesuffix(PREDICATE_SUFFIX),
+        name=function.name.removesuffix(suffix),
         arguments=function.arguments,
         external=function.external,
     )
 
 
-def unmap_atom(atom: AST) -> AST:
+def unmap_atom(atom: AST, suffix: str) -> AST:
     """
     Undo the mapping of a predicate to its auxiliary version.
     """
@@ -130,17 +124,17 @@ def unmap_atom(atom: AST) -> AST:
 
     match term.ast_type:
         case ASTType.Function:
-            return SymbolicAtom(symbol=_unmap_function(term))
+            return SymbolicAtom(symbol=_unmap_function(term, suffix))
         case ASTType.Pool:
             new_arguments = []
             for arg in term.arguments:
-                new_arguments.append(_unmap_function(arg))
+                new_arguments.append(_unmap_function(arg, suffix))
             return SymbolicAtom(symbol=Pool(location=LOC, arguments=new_arguments))
         case _:
             raise RuntimeError(f"Term of atom is not a function or pool: {atom}")
 
 
-def is_mapped_predicate(atom: AST) -> bool:
+def is_mapped_predicate(atom: AST, suffix: str) -> bool:
     """
     Check whether an atom contains an auxiliary predicate.
     """
@@ -152,11 +146,11 @@ def is_mapped_predicate(atom: AST) -> bool:
     match term.ast_type:
         case ASTType.Function:
             name: str = term.name
-            return name.endswith(PREDICATE_SUFFIX)
+            return name.endswith(suffix)
         case ASTType.Pool:
             function = term.arguments[0]
             name = function.name
-            return name.endswith(PREDICATE_SUFFIX)
+            return name.endswith(suffix)
         case _:
             log.error("term %s with unexpected type %s", term, term.ast_type)
 
@@ -206,3 +200,23 @@ def aggregate_constraint(aggregate: AST, body: Sequence[AST]) -> AST:
     )
 
     return constraint
+
+
+def replace_predicate(atom: AST, new_pred: Predicate) -> AST:
+    """
+    Replace the predicate of a symbolic atom.
+    """
+    if atom.ast_type != ASTType.SymbolicAtom:
+        raise RuntimeError(f"Argument is not a symbolic atom {atom}")
+
+    match atom.symbol.ast_type:
+        case ASTType.Function:
+            new_fun = atom.symbol.update(name=new_pred.name)
+            return atom.update(symbol=new_fun)
+        case ASTType.Pool:
+            log.error("replace predicate not yet implemented for pools")
+            raise NotImplementedError()
+        case _:
+            raise RuntimeError(f"Unexpected type of symbolic atom {atom} ({atom.term.ast_type})")
+
+    return atom
