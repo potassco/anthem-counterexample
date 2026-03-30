@@ -146,10 +146,19 @@ class Auxiliaries:
         )
 
     def replace(self, **kwargs: Any) -> "Auxiliaries":
-        """Get a Auxiliaries object with certain values replaced."""
+        """
+        Get a Auxiliaries object with certain values replaced.
+
+        The arguments specify which key to replace by what value.
+        """
         return replace(self, **kwargs)
 
-    def replace_values(self, replacements: dict[str, str]) -> "Auxiliaries":
+    def replace_values(self, replacements: dict[Predicate, Predicate]) -> "Auxiliaries":
+        """
+        Get a Auxiliaries objects with certain values replaced.
+
+        Argument is a dictionary mapping values to new values.
+        """
         str_replacements = {}
         for pred in replacements:
             str_replacements[pred.name] = replacements[pred].name

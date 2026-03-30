@@ -200,3 +200,23 @@ def aggregate_constraint(aggregate: AST, body: Sequence[AST]) -> AST:
     )
 
     return constraint
+
+
+def replace_predicate(atom: AST, new_pred: Predicate) -> AST:
+    """
+    Replace the predicate of a symbolic atom.
+    """
+    if atom.ast_type != ASTType.SymbolicAtom:
+        raise RuntimeError(f"Argument is not a symbolic atom {atom}")
+
+    match atom.symbol.ast_type:
+        case ASTType.Function:
+            new_fun = atom.symbol.update(name=new_pred.name)
+            return atom.update(symbol=new_fun)
+        case ASTType.Pool:
+            log.error("replace predicate not yet implemented for pools")
+            raise NotImplementedError()
+        case _:
+            raise RuntimeError(f"Unexpected type of symbolic atom {atom} ({atom.term.ast_type})")
+
+    return atom

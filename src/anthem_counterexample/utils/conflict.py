@@ -2,11 +2,12 @@
 Module for checking for naming conflicts of predicates.
 """
 
-from clingo.ast import AST, Transformer
+from clingo.ast import AST, ASTType, Transformer
 
 from . import Auxiliaries, Predicate
 from .logging import get_logger
-from .transformation import atom_to_predicate
+from .output import program_to_str
+from .transformation import apply_transformer, atom_to_predicate, replace_predicate
 
 log = get_logger(__name__)
 
@@ -14,6 +15,9 @@ log = get_logger(__name__)
 def check_and_rename_auxiliaries(
     left: list[AST], right: list[AST], publics: set[Predicate], aux: Auxiliaries
 ) -> Auxiliaries:
+    """
+    Check the auxiliaries for conflicts with the two programs.
+    """
     privates = _collect_privates(left + right, publics)
     predicates = publics | privates
     conflict_predicates = _conflicting_predicates(predicates, aux.predicates())
@@ -25,10 +29,13 @@ def check_and_rename_auxiliaries(
     if aux.size in placeholders:
         log.error("Renaming of size placegolder not yet supported")
         raise RuntimeError("Size placeholder conlficts with a placeholder in the programs")
+        new_placeholder = _get_fresh_placeholder(aux.size, placeholders)
+        aux = aux.replace(size=new_placeholder)
 
     if _contains_suffix(publics | privates, aux.suffix):
-        log.error("Renaming of the predicate suffix not yet supported")
-        raise RuntimeError("Predicate suffix conflicting with some predicate name")
+        new_suffix = _get_fresh_suffix(aux.suffix, publics | privates)
+        log.debug("new predicate suffix is %s", new_suffix)
+        aux = aux.replace(suffix=new_suffix)
 
     return aux
 
@@ -45,9 +52,6 @@ def check_and_rename_privates(
     if conflicts:
         replacements, _ = _get_replacements(conflicts, publics | privates_left | privates_right)
 
-        log.error("Renaming of conflicting private predicates not yet supported")
-        raise RuntimeError(f"Found conflicting private predicates: {[str(p) for p in conflicts]}")
-
         right = _replace_predicates(right, replacements)
 
     return left, right
@@ -63,6 +67,20 @@ def _get_replacements(
         predicates.add(new)
         log.debug("Replacement for %s is %s", pred, new)
     return pred_replacements, predicates
+
+
+def _get_fresh_placeholder(base: str, placeholders: set[str]) -> str:
+    pass
+
+
+def _get_fresh_suffix(base: str, predicates: set[Predicate]) -> str:
+    i = 0
+    new = f"{base}{i}"
+    while _contains_suffix(predicates, new):
+        i += 1
+        new = f"{base}{i}"
+
+    return new
 
 
 def _get_replacement_predicate(base: Predicate, predicates: set[Predicate]) -> Predicate:
@@ -82,6 +100,10 @@ def _replace_predicates(program: list[AST], replacements: dict[Predicate, Predic
     """
     Replace all predicates that are part of the replacement dictionary.
     """
+    program = apply_transformer(PredicateReplacer(replacements), program)
+    log.debug("Program after replacing conflicting predicates")
+    log.debug(program_to_str(program, True))
+    return program
 
 
 def _collect_placeholders(program: list[AST]) -> set[str]:
@@ -122,8 +144,30 @@ class PrivatePredicateCollector(Transformer):
         """
         Add the predicate of a symbolic atom to the privates if it is not public.
         """
-        pred = atom_to_predicate(node)
-        if pred not in self.publics:
-            self.privates.add(pred)
+        if node.symbol.ast_type in [ASTType.Function, ASTType.Pool]:
+            pred = atom_to_predicate(node)
+            if pred not in self.publics:
+                self.privates.add(pred)
+
+        return node
+
+
+class PredicateReplacer(Transformer):
+    """
+    Class to replace predicates according to a replacement dictionary.
+    """
+
+    def __init__(self, replacements: dict[Predicate, Predicate]) -> None:
+        super().__init__()
+        self.replacements = replacements
+
+    def visit_SymbolicAtom(self, node: AST) -> AST:  # pylint: disable=invalid-name
+        """
+        Replace the predicate of a symbolic atom if it is part of the replacements.
+        """
+        if node.symbol.ast_type in [ASTType.Function, ASTType.Pool]:
+            pred = atom_to_predicate(node)
+            if pred in self.replacements:
+                return replace_predicate(node, self.replacements[pred])
 
         return node
