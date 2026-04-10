@@ -10,8 +10,7 @@ requires-python = ">=3.12"
 dependencies = [
     "clingo>=5.7.1",
     "networkx",
-    # "guess_and_check@git+https://github.com/potassco/guess_and_check.git",
-    "guess_and_check@git+https://github.com/janheuer/guess_and_check.git",
+    "guess_and_check@git+https://github.com/potassco/guess_and_check.git",
 ]
 license = { file = "LICENSE" }
 dynamic = ["version"]
