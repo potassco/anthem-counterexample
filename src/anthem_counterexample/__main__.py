@@ -3,6 +3,7 @@ The main entry point for the application.
 """
 
 import sys
+from copy import deepcopy
 
 from . import assemble_and_execute
 from .analysis.conflict import check_and_rename_auxiliaries, check_and_rename_privates
@@ -36,8 +37,8 @@ def main() -> None:
     auxiliaries = Auxiliaries.default()
     auxiliaries = check_and_rename_auxiliaries(left, right, inputs | outputs, auxiliaries)
 
-    left_normalized = normalize_program(left)
-    right_normalized = normalize_program(right)
+    left_normalized = normalize_program(deepcopy(left))
+    right_normalized = normalize_program(deepcopy(right))
 
     if has_recursive_aggregates(left_normalized) or has_recursive_aggregates(right_normalized):
         raise RuntimeError("Recursive aggregates are not supported.")
@@ -74,8 +75,8 @@ def main() -> None:
 
     # collect all program parts
     progs = Programs(
-        left=parse_program(args.left),
-        right=parse_program(args.right),
+        left=left,
+        right=right,
         generate=get_generate_program(opts.inputs, assumptions, opts.auxiliaries),
         difference=get_difference_program(opts.outputs, opts.use_gc, opts.auxiliaries),
         public_reduct_left=(
