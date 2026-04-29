@@ -43,7 +43,7 @@ external behavior of the second program. For example
 
 ```
 ...
-Found a counterexample for domain size 1 in the forward direction
+Found a counterexample of size 1 in the forward direction
   Input for the counterexample:
     start(1), edge(1,1)
   External behavior of left:
