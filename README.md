@@ -45,9 +45,9 @@ external behavior of the second program. For example
 ...
 Found a counterexample of size 1 in the forward direction
   Input for the counterexample:
-    start(1), edge(1,1)
+    start(0), edge(0,0)
   External behavior of left:
-    path(1,1)
+    path(0,0)
 ```
 
 ### Useful options
