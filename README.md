@@ -81,17 +81,17 @@ anthem-cx -h
 
 Any additional arguments are passed along to clingo while solving.
 
-### EVA condition and the guess and check approach
+### Uniqueness condition and the guess and check approach
 
-The so-called enough visible atoms (EVA) condition limits the use of private
-predicates. In the case that the EVA condition is not fulfilled, guess and
-check answer set programming has to be used.
+The uniqueness condition limits the use of private predicates. In the case that
+uniqueness is not fulfilled, guess and check answer set programming has to be
+used.
 
-The use of the guess and check transformation can be controlled via the option
-`--guess-and-check`. By default a combination of two checks (`syntax` and
-`runtime`) is used. It is possible to only use one of these checks or
-alternatively to force or disable the use of the guess and check method. The
-disable option should only be used if EVA was manually verified. Otherwise
+The choice of uniqueness check can be controlled via the option
+`--uniqueness-check`. By default a combination of two checks (`stratification`
+and `local`) is used. It is possible to only use one of these checks or
+alternatively skip (`skip`) or force a failure (`fail`) of the check. The skip
+option should only be used if uniqueness was manually verified. Otherwise
 incorrect counterexamples may be found.
 
 ## Examples
