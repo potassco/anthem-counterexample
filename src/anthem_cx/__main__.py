@@ -6,7 +6,7 @@ import sys
 from copy import deepcopy
 
 from . import assemble_and_execute
-from .analysis.conflict import check_and_rename_auxiliaries, check_and_rename_privates
+from .analysis.conflict import check_and_rename_auxiliaries, check_and_rename_privates, collect_ground_terms
 from .analysis.dependency import has_enough_visible_atoms, has_recursive_aggregates
 from .eqt import get_difference_program, get_generate_program, get_public_reduct, normalize_program
 from .utils import Auxiliaries, Direction, EVAData, Options, Programs
@@ -33,6 +33,8 @@ def main() -> None:
     right = parse_program(args.right)
 
     left, right = check_and_rename_privates(left, right, inputs | outputs)
+
+    ground_terms = collect_ground_terms(left + right)
 
     auxiliaries = Auxiliaries.default()
     auxiliaries = check_and_rename_auxiliaries(left, right, inputs | outputs, auxiliaries)
