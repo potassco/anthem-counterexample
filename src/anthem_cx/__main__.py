@@ -50,7 +50,7 @@ def main() -> None:
         solve=not args.no_solve,
         start=args.start,
         max_size=args.max,
-        eva=EVAData.from_string(args.guess_and_check),
+        eva=EVAData.from_string(args.uniqueness_check),
         inputs=inputs,
         outputs=outputs,
         clingo_args=clingo_args,
