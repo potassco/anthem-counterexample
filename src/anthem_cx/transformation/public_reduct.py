@@ -2,7 +2,7 @@
 Module to transform a program into its public reduct.
 """
 
-from clingo.ast import AST, ASTType, Function, Literal, Rule, Sign, SymbolicAtom, Transformer
+from clingo.ast import AST, ASTType, ConditionalLiteral, Function, Literal, Rule, Sign, SymbolicAtom, Transformer
 
 from ..utils import Auxiliaries, Predicate
 from ..utils.logging import get_logger
@@ -67,9 +67,9 @@ class ReplacePositiveOutputPredicates(Transformer):
 
                 return node
 
-            case _:
-                log.warning("Unexpected atom type %s for literal %s", atom.ast_type, node)
-                return node
+            case _:  # nocoverage
+                log.warning("Unexpected atom type %s for literal %s", atom.ast_type, node)  # nocoverage
+                return node  # nocoverage
 
 
 class TransformRuleHeads(Transformer):
@@ -108,8 +108,8 @@ class TransformRuleHeads(Transformer):
         ):
             # the only type of disjunction should be the empty disjunction
             if head.ast_type == ASTType.Disjunction and len(head.elements) != 0:
-                log.warning("Unexpected disjunctive rule %s", node)
-                return node
+                log.error("Unexpected disjunctive rule %s", node)
+                raise RuntimeError(f"Unexpected disjunctive rule {node}")
 
             # new head is the unsat predicate
             unsat_head = Literal(
@@ -134,14 +134,18 @@ class TransformRuleHeads(Transformer):
         # 3: choice rule
         if head.ast_type == ASTType.Aggregate and len(head.elements) == 1:
             # the choice rue should contain exactly one element and no guards
-            if len(head.elements) != 1:
-                log.warning("Unexpected choice rule with multiple elements %s", node)
-                return node
-            if head.left_guard is not None or head.right_guard is not None:
-                log.warning("Unexpected choice rule with guards %s", node)
-                return node
+            if len(head.elements) != 1:  # nocoverage
+                log.warning("Unexpected choice rule with multiple elements %s", node)  # nocoverage
+                return node  # nocoverage
+            if head.left_guard is not None or head.right_guard is not None:  # nocoverage
+                log.warning("Unexpected choice rule with guards %s", node)  # nocoverage
+                return node  # nocoverage
 
-            literal = head.elements[0]
+            element = head.elements[0]
+            if element.ast_type == ASTType.ConditionalLiteral:
+                literal = element.literal
+            else:
+                literal = element  # nocoverage
 
             if literal.sign != Sign.NoSign:
                 log.warning("Unexpected negation in choice head %s", node)
