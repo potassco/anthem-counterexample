@@ -217,6 +217,6 @@ def replace_predicate(atom: AST, new_pred: Predicate) -> AST:
             log.error("replace predicate not yet implemented for pools")
             raise NotImplementedError()
         case _:
-            raise RuntimeError(f"Unexpected type of symbolic atom {atom} ({atom.term.ast_type})")
+            raise RuntimeError(f"Unexpected type of symbolic atom {atom} ({atom.symbol.ast_type})")
 
     return atom
